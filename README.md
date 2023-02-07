@@ -38,3 +38,8 @@ new CopyPlugin({
 
     })
 ```
+# How to update stale chart
+1. cd into folder of submodule.
+2. switch or checkout to the commit/branch that you want
+3. cd out of folder of submodule.
+4. add, commit, push
