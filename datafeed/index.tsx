@@ -1,7 +1,48 @@
-import { makeApiRequest, generateSymbol, parseFullSymbol } from './helpers'
 import { subscribeOnStream, unsubscribeFromStream } from './streaming'
-import { getIndexTimeSeries } from '../../../queries/getIndexTimeSeries'
 import { getTokenList } from '../../TokensList/TokensList'
+import { WebSocketLink } from '@apollo/client/link/ws'
+import { SubscriptionClient } from 'subscriptions-transport-ws'
+import { ApolloClient, gql, HttpLink, InMemoryCache, split } from '@apollo/client'
+import { getMainDefinition } from '@apollo/client/utilities'
+
+interface Candle {
+  open: number
+  high: number
+  close: number
+  low: number
+  timestamp: number
+}
+
+const httpLink = new HttpLink({
+  uri:
+    typeof window !== `undefined` && window.location.hostname === 'charts.volmex.finance'
+      ? 'https://api-v2.volmex.finance/graphql'
+      : 'https://test-api.volmex.finance/graphql',
+  // uri: 'https://api-v2.volmex.finance/graphql'
+})
+
+const wsLink = new WebSocketLink(
+  new SubscriptionClient(
+    typeof window !== `undefined` && window.location.hostname === 'charts.volmex.finance'
+      ? 'wss://api-v2.volmex.finance/graphql'
+      : 'wss://test-api.volmex.finance/graphql'
+  )
+  // new SubscriptionClient('ws://localhost:3003/graphql')
+)
+
+const apolloLink = split(
+  ({ query }) => {
+    const definition = getMainDefinition(query)
+    return definition.kind === 'OperationDefinition' && definition.operation === 'subscription'
+  },
+  wsLink,
+  httpLink
+)
+
+export const apolloClient = new ApolloClient({
+  link: apolloLink,
+  cache: new InMemoryCache(),
+})
 
 const lastBarsCache = new Map()
 
@@ -37,7 +78,7 @@ const supported_resolutions = {
 }
 
 const configurationData = {
-  supported_resolutions: Object.keys(supported_resolutions),
+  supported_resolutions: ['1', '5', '15', '60', '1D'],
 }
 
 function getAllSymbols() {
@@ -124,35 +165,54 @@ export default {
   },
 
   getBars: async (symbolInfo, resolution, periodParams, onHistoryCallback, onErrorCallback) => {
-    const { from, to, firstDataRequest } = periodParams
+    const { from: unsafeFrom, to, firstDataRequest } = periodParams
+    const from = Math.max(0, unsafeFrom)
     const { exchange } = symbolInfo
     console.log('[getBars]: Method call', symbolInfo, resolution, from, to)
     console.log('symbol info', symbolInfo)
 
     if (exchange === 'Volmex') {
       try {
-        const timeBucket = supported_resolutions[resolution].timeBucket
-        const lookBackPeriod = supported_resolutions[resolution].lookBackPeriod
-
-        const getBarsData = async (ticker, timeBucket, lookBackPeriod, toDate) => {
-          const data = await getIndexTimeSeries(ticker, timeBucket, lookBackPeriod, toDate)
-
-          console.log('data', data)
-          console.log()
-          const bars = data.map((bar) => ({
-            // time: new Date(new Date(bar.date).toLocaleString()).getTime(),
-            time: new Date(bar.date).getTime(),
-            low: bar.low,
-            high: bar.high,
-            open: bar.open,
-            close: bar.close,
-          }))
-
-          return bars
+        var split_symbol = symbolInfo.name.split(/[:/]/)
+        const resolutionToInterval = {
+          1: '1',
+          5: '5',
+          15: '15',
+          60: '60',
+          240: '60',
+          '1D': 'D',
+          // ''
         }
+        console.log({ split_symbol })
+        const indexToSymbol = {
+          BTC: 'BVIV',
+          ETH: 'EVIV',
+        }
+        const symbol = indexToSymbol[split_symbol[0]] ?? Object.keys(indexToSymbol)[0]
+        const url = new URL(`https://rest-v1.volmex.finance/public/history`)
+        url.searchParams.append('symbol', symbol)
+        url.searchParams.append('resolution', resolutionToInterval[resolution]) // 1, 5, 15, 30, 60
+        url.searchParams.append('from', String(from))
+        url.searchParams.append('to', String(to))
 
-        const toDate = new Date(to * 1000).toISOString().slice(0, 10)
-        const bars = await getBarsData(symbolInfo?.ticker || 'ETH', timeBucket, lookBackPeriod, toDate)
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'content-type': 'application/json',
+          },
+        })
+        const data = await response.json()
+
+        const bars = data.t.map((timestamp, i) => {
+          return {
+            time: timestamp * 1000,
+            low: data.l[i],
+            high: data.h[i],
+            open: data.o[i],
+            close: data.c[i],
+            volume: data.v[i],
+          }
+        })
         const lastBarLen = lastBarsCache.get(symbolInfo.full_name)?.barsLen || bars.length
         const keepBrowsing = lastBarsCache.get(symbolInfo.full_name)?.keepBrowsing
         const counter = lastBarsCache.get(symbolInfo.full_name)?.counter || 0
@@ -197,7 +257,7 @@ export default {
         }
 
         console.log(`[getBars]: returned ${bars.length} bar(s)`)
-        
+
         return bars
       } catch (error) {
         console.log('[getBars]: Get error', error)
@@ -212,7 +272,7 @@ export default {
           15: '15m',
           60: '1h',
           240: '4h',
-          "1D": '1d',
+          '1D': '1d',
           // ''
         }
         // TODO: Limits and getting range when zoom out more
@@ -233,23 +293,26 @@ export default {
             return []
           }
           if (data.length === 0) {
-            break;
+            break
           }
-          bars.push(...data.map((el) => {
-            return {
-              time: el[0], 
-              low: el[3],
-              high: el[2],
-              open: el[1],
-              close: el[4],
-              volume: el[5],
-            }
-          }))
-          if (data.length === qs.limit) { // if max entries found then keep 
+          bars.push(
+            ...data.map((el) => {
+              return {
+                time: el[0],
+                low: el[3],
+                high: el[2],
+                open: el[1],
+                close: el[4],
+                volume: el[5],
+              }
+            })
+          )
+          if (data.length === qs.limit) {
+            // if max entries found then keep
             const lastTime = bars[bars.length - 1].time
             qs.startTime = lastTime + 1
           } else {
-            break;
+            break
           }
         }
         if (firstDataRequest) {
@@ -273,7 +336,7 @@ export default {
             // limit: 2000,
             // aggregate: 1//resolution
           }
-  
+
           // console.log({qs})
           // return rp({
           //   url: `${api_root}${url}`,
@@ -307,7 +370,7 @@ export default {
               onHistoryCallback([], { noData: true })
             }
             console.log(`[getBars]: returned ${bars.length} bar(s)`)
-  
+
             onHistoryCallback(bars, {
               noData: false,
             })
