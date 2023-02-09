@@ -2,7 +2,8 @@ import { parseResolution } from './helpers'
 import { gql } from '@apollo/client'
 import { apolloClient } from '.'
 
-const subscriptions: any = []
+const subscriptions: any = {}
+const unsubscriptions: any = {}
 
 export function subscribeOnStream(
   symbolInfo,
@@ -14,7 +15,7 @@ export function subscribeOnStream(
 ) {
   const asset = symbolInfo?.ticker
   const timeBucket = parseResolution(resolution)
-
+  console.log({ asset, subscribeUID })
   // get iv_provider from URL query params
   const ivProvider = window.location.search.split('iv_provider=')[1]
 
@@ -24,7 +25,32 @@ export function subscribeOnStream(
     resolution,
     lastBar: lastDailyBar,
   }
+  const url = new URL('https://rest-v1.volmex.finance/public/streaming')
+  const symbol =
+    {
+      ETH: 'EVIV',
+      BTC: 'BVIV',
+    }[asset as string] ?? 'EVIV'
+  url.searchParams.append('symbol', symbol)
+  url.searchParams.append('resolution', 'D')
+  console.log({ url })
+  fetch('https://rest-v1.volmex.finance/public/streaming?symbol=EVIV&resolution=1').then(async (response) => {
+    if (!response || !response.body) {
+      console.error('No response from server')
+      return
+    }
+    const reader = response.body.getReader()
+    while (true) {
+      const { value, done } = await reader.read()
+      if (done) break
+      const rawTimeseries = new TextDecoder().decode(value)
+      console.log('Received', rawTimeseries)
+      console.log('Received', JSON.parse(rawTimeseries))
+      console.log({ value })
+    }
+  })
 
+  console.log('Response fully received')
   subscriptions[subscribeUID].client = apolloClient
     .subscribe({
       query: gql`
@@ -58,7 +84,7 @@ export function subscribeOnStream(
 }
 
 export function unsubscribeFromStream(subscriberUID) {
-  subscriptions[subscriberUID].client.unsubscribe()
+  unsubscriptions[subscriberUID] = true
 }
 
 function updateBar(data: any, sub: any) {
