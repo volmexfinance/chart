@@ -246,6 +246,7 @@ export default {
             ...bars[bars.length - 1],
           })
         }
+
         onHistoryCallback(bars, { noData: bars.length === 0 ? true : false })
         console.log(`[getBars]: returned ${bars.length} bar(s)`)
       } catch (error) {
