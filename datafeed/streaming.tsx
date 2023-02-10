@@ -1,6 +1,4 @@
 import { parseResolution } from './helpers'
-import { gql } from '@apollo/client'
-import { apolloClient } from '../../../utils/apollo'
 
 const subscriptions: any = {}
 

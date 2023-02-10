@@ -1,5 +1,5 @@
+import { getTokenList } from '../utils'
 import { subscribeOnStream, unsubscribeFromStream } from './streaming'
-import { getTokenList } from '../../TokensList/TokensList'
 
 const lastBarsCache = new Map()
 
