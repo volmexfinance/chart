@@ -41,7 +41,7 @@ export function subscribeOnStream(
   }
   url.searchParams.append('symbol', symbol)
   url.searchParams.append('resolution', resolutionMap[resolution] || '1')
-  console.log({ url })
+
   fetch(url).then(async (response) => {
     if (!response || !response.body) {
       console.error('No response from server')
@@ -63,12 +63,13 @@ export function subscribeOnStream(
           date: parsedTimeseries.t * 1000,
         }
         const _lastBar = updateBar(timeseries)
-        console.log('_lastBarREST', _lastBar)
-        /**
-         * TODO: Fix this, uncomment this line and look at the chart
-         */
-        // onRealtimeCallback(_lastBar)
-        subscriptions[subscribeUID].lastBar = _lastBar
+
+        subscriptions[subscribeUID].lastBar
+        if (subscriptions[subscribeUID].savedBar) {
+          // const _lastBar = fakeData
+          onRealtimeCallback(_lastBar)
+          console.log('lastBar', subscriptions[subscribeUID].lastBar)
+        }
       } catch (e) {
         console.error('error', e)
       }
@@ -97,9 +98,10 @@ export function subscribeOnStream(
     .subscribe({
       next(response) {
         const _lastBar = updateBar(response.data.timeSeries)
-        console.log('_lastBargraphql', ...Object.values(response.data.timeSeries))
-        onRealtimeCallback(_lastBar)
-        subscriptions[subscribeUID].lastBar = _lastBar
+        subscriptions[subscribeUID].savedBar = _lastBar
+        // onRealtimeCallback(_lastBar)
+        // console.log('lastBar', subscriptions[subscribeUID].lastBar)
+        // subscriptions[subscribeUID].lastBar = _lastBar
       },
       error(err) {
         console.error('err', err)
