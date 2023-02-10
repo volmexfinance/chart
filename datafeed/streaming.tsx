@@ -13,6 +13,15 @@ export function subscribeOnStream(
   lastDailyBar
 ) {
   const asset = symbolInfo?.ticker
+
+  const symbol = {
+    ETH: 'EVIV',
+    BTC: 'BVIV',
+  }[asset as string]
+
+  if (!symbol) {
+    return
+  }
   const timeBucket = parseResolution(resolution)
   console.log({ asset, subscribeUID })
   // get iv_provider from URL query params
@@ -26,11 +35,6 @@ export function subscribeOnStream(
     enabled: true,
   }
   const url = new URL('https://rest-v1.volmex.finance/public/streaming')
-  const symbol =
-    {
-      ETH: 'EVIV',
-      BTC: 'BVIV',
-    }[asset as string] ?? 'EVIV'
 
   const resolutionMap = {
     '1': '1',
@@ -51,7 +55,10 @@ export function subscribeOnStream(
     while (subscriptions[subscribeUID].enabled) {
       try {
         const { value, done } = await reader.read()
-        if (done) break
+        if (done || subscriptions[subscribeUID].enabled === false) {
+          reader.releaseLock() // not sure if this is needed
+          break
+        }
         const rawTimeseries = new TextDecoder().decode(value).split('\n')[0]
         const parsedTimeseries = JSON.parse(rawTimeseries)
 
@@ -64,49 +71,13 @@ export function subscribeOnStream(
         }
         const _lastBar = updateBar(timeseries)
 
-        subscriptions[subscribeUID].lastBar
-        if (subscriptions[subscribeUID].savedBar) {
-          // const _lastBar = fakeData
-          onRealtimeCallback(_lastBar)
-          console.log('lastBar', subscriptions[subscribeUID].lastBar)
-        }
+        onRealtimeCallback(_lastBar)
+        subscriptions[subscribeUID].lastBar = _lastBar
       } catch (e) {
         console.error('error', e)
       }
     }
   })
-
-  apolloClient
-    .subscribe({
-      query: gql`
-        subscription timeSeries($asset: String!, $timeBucket: String!, $provider: String!) {
-          timeSeries(asset: $asset, timeBucket: $timeBucket, provider: $provider) {
-            open
-            high
-            close
-            low
-            date
-          }
-        }
-      `,
-      variables: {
-        asset,
-        timeBucket,
-        provider: ivProvider || 'global',
-      },
-    })
-    .subscribe({
-      next(response) {
-        const _lastBar = updateBar(response.data.timeSeries)
-        subscriptions[subscribeUID].savedBar = _lastBar
-        // onRealtimeCallback(_lastBar)
-        // console.log('lastBar', subscriptions[subscribeUID].lastBar)
-        // subscriptions[subscribeUID].lastBar = _lastBar
-      },
-      error(err) {
-        console.error('err', err)
-      },
-    })
 }
 
 export function unsubscribeFromStream(subscriberUID) {
