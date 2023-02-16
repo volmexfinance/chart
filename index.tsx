@@ -22,6 +22,7 @@ export interface ChartContainerProps {
   studiesOverrides: ChartingLibraryWidgetOptions['studies_overrides']
   container: ChartingLibraryWidgetOptions['container']
   theme?: ChartingLibraryWidgetOptions['theme']
+  defaultLines?: number // bar klines area
 }
 
 export interface ChartContainerState {}
@@ -105,7 +106,7 @@ export class TVChart extends React.PureComponent<Partial<ChartContainerProps>, C
 
     tvWidget.onChartReady(() => {
       tvWidget.headerReady().then(() => {
-        tvWidget.chart().setChartType(3)
+        tvWidget.chart().setChartType(this.props.defaultLines ?? 3)
         if (this.props.compareSymbol) {
           tvWidget.chart().createStudy('Compare', false, false, ['open', this.props.compareSymbol])
         }
