@@ -71,7 +71,7 @@ export class TVChart extends React.PureComponent<Partial<ChartContainerProps>, C
         'header_screenshot',
         'header_fullscreen_button',
         'create_volume_indicator_by_default',
-        // 'header_symbol_search',
+        'header_symbol_search',
       ],
       enabled_features: [''],
       theme: this.props.darkMode ? 'Dark' : 'Light',

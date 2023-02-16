@@ -130,11 +130,11 @@ async function getPerpKlines(symbolInfo: SymbolInfo, resolution: Resolution, fro
 
     priceCandles.forEach((candle: any) => {
       bars.push({
-        open: candle.open,
-        high: candle.high,
-        low: candle.low,
-        close: candle.close,
-        date: candle.timestamp * 1000,
+        open: String(candle.open / 1e8),
+        high: String(candle.high / 1e8),
+        low: String(candle.low / 1e8),
+        close: String(candle.close / 1e8),
+        time: candle.timestamp * 1000,
       })
     })
   }
@@ -244,6 +244,14 @@ function getAllSymbols() {
     type: 'crypto',
   }))
 
+  const volmexSymbolsPerps = indexAssets.map((index) => ({
+    symbol: index.symbol,
+    full_name: index.symbol + ' Mark',
+    description: `${index.name} Volatility Index`,
+    exchange: 'VolmexPerps',
+    type: 'crypto',
+  }))
+
   const extraSymbols = [
     {
       symbol: 'ETH/USD',
@@ -261,7 +269,7 @@ function getAllSymbols() {
     },
   ]
 
-  return volmexSymbols.concat(extraSymbols as any)
+  return volmexSymbols.concat(extraSymbols as any).concat(volmexSymbolsPerps)
 }
 
 export default {
@@ -286,10 +294,10 @@ export default {
     onSymbolResolvedCallback: (s: any) => void,
     onResolveErrorCallback: (s: any) => void
   ) => {
-    console.log('[resolveSymbol]: Method call', symbolName)
-
     const symbols = await getAllSymbols()
+    console.log({ symbolName })
     const symbolItem = symbols.find(({ full_name }) => full_name === symbolName)
+    console.log('[resolveSymbol]: Method call', symbolName, symbolItem?.exchange)
     if (!symbolItem) {
       console.log('[resolveSymbol]: Cannot resolve symbol', symbolName)
       onResolveErrorCallback('cannot resolve symbol')
@@ -333,8 +341,18 @@ export default {
     const { exchange } = symbolInfo
     console.log('[getBars]: Method call', symbolInfo, resolution, from, to)
     console.log('symbol info', symbolInfo)
+    if (exchange === 'VolmexPerps') {
+      const bars = await getPerpKlines(symbolInfo, resolution, from, to)
+      if (firstDataRequest) {
+        lastBarsCache.set(symbolInfo.full_name, {
+          ...bars[bars.length - 1],
+        })
+      }
+      const counter = lastBarsCache.get(symbolInfo.full_name + '_' + resolution)?.counter || 0
 
-    if (exchange === 'Volmex') {
+      onHistoryCallback(bars, { noData: counter > 5 && bars.length > 0 ? false : true })
+      console.log(`[getBars]: returned ${bars.length} bar(s)`)
+    } else if (exchange === 'Volmex') {
       try {
         const bars = await getVolmexKlines(symbolInfo, resolution, from, to)
         const lastBarLen = lastBarsCache.get(symbolInfo.full_name)?.barsLen || bars.length
