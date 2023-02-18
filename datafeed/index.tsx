@@ -25,7 +25,7 @@ type SymbolInfo = {
   exchange: string
   full_name: string
 }
-type Resolution = 1 | 5 | 15 | 60 | '1D'
+export type Resolution = 1 | 5 | 15 | 60 | '1D'
 async function getVolmexKlines(symbolInfo: SymbolInfo, resolution: Resolution, from: number, to: number) {
   var split_symbol = symbolInfo.name.split(/[:/]/)
   const resolutionToInterval = {

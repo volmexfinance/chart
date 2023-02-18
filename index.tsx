@@ -7,7 +7,7 @@ import {
 } from './charting_library/charting_library'
 import Datafeed from './datafeed'
 
-export interface ChartContainerProps {
+export interface ChartContainerProps extends ChartingLibraryWidgetOptions {
   symbol: ChartingLibraryWidgetOptions['symbol']
   interval: ChartingLibraryWidgetOptions['interval']
   darkMode?: boolean
@@ -94,7 +94,7 @@ export class TVChart extends React.PureComponent<Partial<ChartContainerProps>, C
         'mainSeriesProperties.candleStyle.wickDownColor': 'gray',
         'mainSeriesProperties.candleStyle.upColor': 'rgb(51,215,120)',
         'mainSeriesProperties.candleStyle.borderUpColor': 'rgb(51,215,120)',
-        'paneProperties.legendProperties.showSeriesTitle': false,
+        'paneProperties.legendProperties.showSeriesTitle': true,
       },
       custom_css_url: '../tvcharts.css',
     }
