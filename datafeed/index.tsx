@@ -1,3 +1,4 @@
+import type { LibrarySymbolInfo } from '../charting_library/charting_library'
 import { getTokenList } from '../utils'
 import { subscribeOnStream, unsubscribeFromStream } from './streaming'
 
@@ -5,6 +6,10 @@ const lastBarsCache = new Map()
 
 const configurationData = {
   supported_resolutions: ['1', '5', '15', '60', '1D'],
+  supports_marks: false,
+  supports_timescale_marks: false,
+  supports_time: true,
+  reset_cache_timeout: 100,
 }
 
 // https://api.thegraph.com/subgraphs/name/jonathanvolmex/perps-mumbai
@@ -37,11 +42,7 @@ async function getVolmexKlines(symbolInfo: SymbolInfo, resolution: Resolution, f
     '1D': 'D',
     // ''
   }
-  const indexToSymbol: { [index: string]: string } = {
-    BTC: 'BVIV',
-    ETH: 'EVIV',
-  }
-  const symbol = indexToSymbol[split_symbol[0]] ?? Object.keys(indexToSymbol)[0]
+  const symbol = split_symbol[0]
   const url = new URL(`https://rest-v1.volmex.finance/public/history`)
   url.searchParams.append('symbol', symbol)
   url.searchParams.append('resolution', resolutionToInterval[resolution]) // 1, 5, 15, 30, 60
@@ -236,21 +237,24 @@ async function getCryptoCompareKlines(
 function getAllSymbols() {
   const indexAssets = getTokenList('index', 80001)
 
-  const volmexSymbols = indexAssets.map((index) => ({
-    symbol: index.symbol,
-    full_name: index.symbol,
-    description: `${index.name} Volatility Index`,
-    exchange: 'Volmex',
-    type: 'crypto',
-  }))
+  const volmexSymbols = indexAssets.map((index) => {
+    const symbol = index.symbol === 'ETH' ? 'EVIV' : 'BVIV'
+    return {
+      symbol: symbol,
+      full_name: symbol,
+      description: `${index.name} Volatility Index`,
+      exchange: 'Volmex',
+      type: 'crypto',
+    }
+  })
 
-  const volmexSymbolsPerps = indexAssets.map((index) => ({
+  const volmexSymbolsPerps: any[] = [] /*indexAssets.map((index) => ({
     symbol: index.symbol,
     full_name: index.symbol + ' Mark',
     description: `${index.name} Volatility Index`,
     exchange: 'VolmexPerps',
     type: 'crypto',
-  }))
+  }))*/
 
   const extraSymbols = [
     {
@@ -295,7 +299,6 @@ export default {
     onResolveErrorCallback: (s: any) => void
   ) => {
     const symbols = await getAllSymbols()
-    console.log({ symbolName })
     const symbolItem = symbols.find(({ full_name }) => full_name === symbolName)
     console.log('[resolveSymbol]: Method call', symbolName, symbolItem?.exchange)
     if (!symbolItem) {
@@ -306,7 +309,7 @@ export default {
 
     console.log('symbolName', symbolName)
 
-    const symbolInfo = {
+    const symbolInfo: LibrarySymbolInfo = {
       ticker: symbolName,
       name: symbolItem.symbol,
       description: symbolItem.description,
