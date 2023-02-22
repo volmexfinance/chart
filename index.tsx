@@ -66,15 +66,19 @@ export class TVChart extends React.PureComponent<Partial<ChartContainerProps>, C
         'header_settings',
         'study_templates',
         // 'auto_enable_symbol_labels', // hide symbol labels
-        'study_overlay_compare_legend_option',
-        'symbol_info',
+        // 'study_overlay_compare_legend_option',
+        // 'symbol_info',
         'header_screenshot',
         'header_fullscreen_button',
         'create_volume_indicator_by_default',
         'header_symbol_search',
         'show_hide_button_in_legend',
       ],
-      enabled_features: ['hide_resolution_in_legend', 'study_overlay_compare_legend_option'],
+      enabled_features: [
+        'auto_enable_symbol_labels',
+        'hide_resolution_in_legend',
+        'study_overlay_compare_legend_option',
+      ],
       theme: this.props.darkMode ? 'Dark' : 'Light',
       client_id: this.props.clientId,
       user_id: this.props.userId,
@@ -108,7 +112,7 @@ export class TVChart extends React.PureComponent<Partial<ChartContainerProps>, C
       tvWidget.headerReady().then(() => {
         tvWidget.chart().setChartType(3)
         if (this.props.compareSymbol) {
-          tvWidget.chart().createStudy('Compare', false, false, ['open', this.props.compareSymbol])
+          tvWidget.chart().createStudy('Compare', true, false, ['open', this.props.compareSymbol])
         }
 
         this.tvWidget = tvWidget
