@@ -42,6 +42,7 @@ export class TVChart extends React.PureComponent<Partial<ChartContainerProps>, C
   private ref: React.RefObject<HTMLDivElement> = React.createRef()
 
   public initWidget(): void {
+    console.log('initWidget', this.props.symbol, this.props.interval)
     if (!this.ref.current) {
       return
     }
@@ -75,9 +76,9 @@ export class TVChart extends React.PureComponent<Partial<ChartContainerProps>, C
         'show_hide_button_in_legend',
       ],
       enabled_features: [
-        'auto_enable_symbol_labels',
-        'hide_resolution_in_legend',
-        'study_overlay_compare_legend_option',
+        // 'auto_enable_symbol_labels',
+        // 'hide_resolution_in_legend',
+        // 'study_overlay_compare_legend_option',
       ],
       theme: this.props.darkMode ? 'Dark' : 'Light',
       client_id: this.props.clientId,
@@ -105,7 +106,7 @@ export class TVChart extends React.PureComponent<Partial<ChartContainerProps>, C
     }
 
     const tvWidget = new widget(widgetOptions)
-
+    console.log({ tvWidget })
     // set chart type to area
 
     tvWidget.onChartReady(() => {

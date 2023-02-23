@@ -109,8 +109,8 @@ export function subscribeOnStream(
   const asset = symbolInfo?.ticker
 
   const symbol = {
-    ETH: 'EVIV',
-    BTC: 'BVIV',
+    EVIV: 'EVIV',
+    BVIV: 'BVIV',
   }[asset as string]
 
   if (!symbol) {
