@@ -108,10 +108,7 @@ export function subscribeOnStream(
   console.log('[subscribeOnStream1]', symbolInfo, resolution, subscribeUID, lastDailyBar, subscriptions)
   const asset = symbolInfo?.ticker
 
-  const symbol = {
-    ETH: 'EVIV',
-    BTC: 'BVIV',
-  }[asset as string]
+  const symbol = asset
 
   if (!symbol) {
     console.warn('Unsupported asset for streaming', asset)
