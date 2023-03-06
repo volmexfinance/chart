@@ -67,12 +67,33 @@ async function getVolmexKlines(symbolInfo: LibrarySymbolInfo, resolution: Resolu
 }
 
 async function getPerpKlines(symbolInfo: LibrarySymbolInfo, resolution: Resolution, from: number, to: number) {
-  var split_symbol = symbolInfo.name.split(/[:/]/)
-  const symbolToBaseToken: { [index: string]: string } = {
-    ETH: '0x24bf203aaf9afb0d4fc03001a368ceab11b92d93',
-    // BTC: '0x24bf203aaf9afb0d4fc03001a368ceab11b92d93', // TODO: remove with BTC base token address
+  const { ticker } = symbolInfo
+
+  const tickerToConfig: {
+    [key: string]: {
+      url: string
+      symbolToBaseToken: { [index: string]: string }
+    }
+  } = {
+    'ETH Mark Mumbai': {
+      url: 'https://api.thegraph.com/subgraphs/name/jonathanvolmex/perps-mumbai',
+      symbolToBaseToken: {
+        ETH: '0x24bf203aaf9afb0d4fc03001a368ceab11b92d93',
+        // BTC: '0x24bf203aaf9afb0d4fc03001a368ceab11b92d93', // TODO: remove with BTC base token address
+      },
+    },
+    'ETH Mark Arbitrum Goerli': {
+      url: 'https://api.thegraph.com/subgraphs/name/jonathanvolmex/perps-arbgoerli',
+      symbolToBaseToken: {
+        ETH: '0xe887ab57e994845a70a4e8eaa82048964d6afe3f',
+      },
+    },
   }
-  const baseToken = symbolToBaseToken[split_symbol[0]] ?? '0x24bf203aaf9afb0d4fc03001a368ceab11b92d93'
+  const config = tickerToConfig[ticker ?? 'ETH Mark Mumbai']
+
+  var split_symbol = symbolInfo.name.split(/[:/]/)
+  console.log({ symbolInfo })
+  const baseToken = config.symbolToBaseToken[split_symbol[0]]
   const bars: any[] = []
   const resolutionToInterval = {
     1: '1m',
@@ -86,7 +107,7 @@ async function getPerpKlines(symbolInfo: LibrarySymbolInfo, resolution: Resoluti
   let limit = 1000
   let index = 0
   while (bars.length % limit === 0) {
-    const response = await fetch('https://api.thegraph.com/subgraphs/name/jonathanvolmex/perps-mumbai', {
+    const response = await fetch(config.url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -243,13 +264,22 @@ function getAllSymbols() {
     }
   })
 
-  const volmexSymbolsPerps: any[] = indexAssets.map((index) => ({
-    symbol: index.symbol,
-    full_name: index.symbol + ' Mark',
-    description: `${index.name} Volatility Index`,
-    exchange: 'VolmexPerps',
-    type: 'crypto',
-  }))
+  const volmexSymbolsPerps: any[] = [
+    ...indexAssets.map((index) => ({
+      symbol: index.symbol,
+      full_name: index.symbol + ' Mark Mumbai',
+      description: `${index.name} Volatility Index`,
+      exchange: 'VolmexPerps',
+      type: 'crypto',
+    })),
+    ...indexAssets.map((index) => ({
+      symbol: index.symbol,
+      full_name: index.symbol + ' Mark Arbitrum Goerli',
+      description: `${index.name} Volatility Index`,
+      exchange: 'VolmexPerps',
+      type: 'crypto',
+    })),
+  ]
 
   const extraSymbols = [
     {
