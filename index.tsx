@@ -106,7 +106,7 @@ export class TVChart extends React.PureComponent<Partial<ChartContainerProps>, C
       },
       custom_css_url: '../tvcharts.css',
     }
-
+    console.log({darkMode123: this.props.darkMode})
     const tvWidget = new widget(widgetOptions)
     console.log({ tvWidget })
     // set chart type to area
@@ -138,20 +138,25 @@ export class TVChart extends React.PureComponent<Partial<ChartContainerProps>, C
   }
 
   public componentDidMount(): void {
+    console.log('darkMode123 mount', this.props.darkMode)
     this.initWidget()
   }
-
+  
   public componentWillUnmount(): void {
+    console.log('darkMode123 unmount', this.props.darkMode)
     if (this.tvWidget !== null) {
       this.tvWidget.remove()
       this.tvWidget = null
     }
   }
-
+  
   componentDidUpdate = () => {
+    console.log('darkMode123 update', this.props.darkMode)
     if (this.tvWidget !== null) {
       this.tvWidget.remove()
       this.tvWidget = null
+      this.initWidget()
+    } else {
       this.initWidget()
     }
   }
