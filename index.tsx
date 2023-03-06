@@ -100,6 +100,7 @@ export class TVChart extends React.PureComponent<Partial<ChartContainerProps>, C
         'mainSeriesProperties.candleStyle.upColor': 'rgb(51,215,120)',
         'mainSeriesProperties.candleStyle.borderUpColor': 'rgb(51,215,120)',
         'paneProperties.legendProperties.showSeriesTitle': false,
+        'scalesProperties.showSymbolLabels': true,
       },
       custom_css_url: '../tvcharts.css',
     }
@@ -113,6 +114,7 @@ export class TVChart extends React.PureComponent<Partial<ChartContainerProps>, C
         tvWidget.chart().setChartType(3)
         if (this.props.compareSymbol) {
           tvWidget.chart().createStudy('Compare', true, false, ['open', this.props.compareSymbol])
+          tvWidget.chart().applyOverrides({ 'scalesProperties.showSymbolLabels': true })
         }
 
         this.tvWidget = tvWidget
