@@ -78,14 +78,14 @@ async function getPerpKlines(symbolInfo: LibrarySymbolInfo, resolution: Resoluti
     'ETH Mark Mumbai': {
       url: 'https://api.thegraph.com/subgraphs/name/jonathanvolmex/perps-mumbai',
       symbolToBaseToken: {
-        ETH: '0x24bf203aaf9afb0d4fc03001a368ceab11b92d93',
+        ETH: '0xaa1d46600a01dCe6712D7b38183D10cC1Bea814B',
         // BTC: '0x24bf203aaf9afb0d4fc03001a368ceab11b92d93', // TODO: remove with BTC base token address
       },
     },
     'ETH Mark Arbitrum Goerli': {
       url: 'https://api.thegraph.com/subgraphs/name/jonathanvolmex/perps-arbgoerli',
       symbolToBaseToken: {
-        ETH: '0xe887ab57e994845a70a4e8eaa82048964d6afe3f',
+        ETH: '0xC2e6711377205c4cFE9f749cc38089516F60B97b',
       },
     },
   }
