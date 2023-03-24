@@ -106,8 +106,36 @@ export class TVChart extends React.PureComponent<Partial<ChartContainerProps>, C
       custom_css_url: '../tvcharts.css',
       compare_symbols: [
         {
-          symbol: 'BTC',
-          title: 'BTC',
+          symbol: 'EVIV',
+          title: 'Volmex Ethereum Implied Volatility Index',
+        },
+        {
+          symbol: 'BVIV',
+          title: 'Volmex Bitcoin Implied Volatility Index',
+        },
+        {
+          symbol: 'EVRV',
+          title: 'Volmex Ethereum Realized Volatility Index',
+        },
+        {
+          symbol: 'BVRV',
+          title: 'Volmex Bitcoin Realized Volatility Index',
+        },
+        {
+          symbol: 'EVRP',
+          title: 'Volmex Ethereum Risk Premium Index',
+        },
+        {
+          symbol: 'BVRP',
+          title: 'Volmex Bitcoin Risk Premium Index',
+        },
+        {
+          symbol: 'EVCORR1W',
+          title: 'Volmex Ethereum Spot Volatility 1 Week Correlation Index',
+        },
+        {
+          symbol: 'BVCORR1W',
+          title: 'Volmex Bitcoin Spot Volatility 1 Week Correlation Index',
         },
       ],
     }
