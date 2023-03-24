@@ -455,7 +455,9 @@ export default {
     const newSymbols = symbols.filter((symbol) => {
       const isExchangeValid = exchange === '' || symbol.exchange === exchange
       const isFullSymbolContainsInput = symbol.full_name.toLowerCase().indexOf(userInput.toLowerCase()) !== -1
-      return isExchangeValid && isFullSymbolContainsInput
+      const isDescriptionContainsInput = symbol.description.toLowerCase().indexOf(userInput.toLowerCase()) !== -1
+      const isExchangeContainsInput = symbol.exchange.toLowerCase().indexOf(userInput.toLowerCase()) !== -1
+      return isExchangeValid && (isFullSymbolContainsInput || isDescriptionContainsInput || isExchangeContainsInput)
     })
     onResultReadyCallback(newSymbols)
   },
