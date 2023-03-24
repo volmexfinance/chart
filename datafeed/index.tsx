@@ -29,6 +29,7 @@ type SymbolInfo = {
   name: string
   exchange: string
   full_name: string
+  description: string
 }
 export type Resolution = '1' | '5' | '15' | '60' | '1D'
 async function getVolmexKlines(symbolInfo: SymbolInfo, resolution: Resolution, from: number, to: number) {
@@ -42,6 +43,7 @@ async function getVolmexKlines(symbolInfo: SymbolInfo, resolution: Resolution, f
     '1D': 'D',
     // ''
   }
+  console.log({ symbolInfo })
   const calculateBack3Days = (to: number) => {
     const back3Days = 3 * 24 * 60 * 60
     return to - back3Days
@@ -55,8 +57,60 @@ async function getVolmexKlines(symbolInfo: SymbolInfo, resolution: Resolution, f
     return to - back1000Days
   }
   const symbol = split_symbol[0]
-  const url = new URL(`https://rest-v1.volmex.finance/public/history`)
-  url.searchParams.append('symbol', symbol)
+
+  const getBaseSymbol = (symbolInfo: SymbolInfo) => {
+    // current naming conventions in volmex docs use E for ETH and B for BTC as the first letter of the symbol
+    return symbolInfo.name[0] === 'E' ? 'ETH' : 'BTC'
+  }
+  const getUrlString = (symbolInfo: SymbolInfo) => {
+    if (symbolInfo.name.includes('VIV')) {
+      const url = new URL(`https://test-api.volmex.finance/public/iv/history`)
+      url.searchParams.append('symbol', symbol)
+      return url.toString()
+    } else if (symbolInfo.name.includes('VRV')) {
+      const url = new URL(`https://test-api.volmex.finance/public/rv/history`)
+      url.searchParams.append('type', 'VRV')
+      url.searchParams.append('symbol', getBaseSymbol(symbolInfo))
+      return url.toString()
+    } else if (symbolInfo.name.includes('VRP')) {
+      const url = new URL(`https://test-api.volmex.finance/public/rv/history`)
+      url.searchParams.append('type', 'VRP')
+      url.searchParams.append('symbol', getBaseSymbol(symbolInfo))
+      return url.toString()
+    } else if (symbolInfo.name.includes('VCORR')) {
+      const url = new URL(`https://test-api.volmex.finance/public/vcorr/history`)
+      if (symbolInfo.name.includes('VCORR3')) {
+        url.searchParams.append('type', 'vcorr_03d01h')
+        url.searchParams.append('symbol', getBaseSymbol(symbolInfo))
+      } else if (symbolInfo.name.includes('7')) {
+        url.searchParams.append('type', 'vcorr_07d02h')
+        url.searchParams.append('symbol', getBaseSymbol(symbolInfo))
+      } else if (symbolInfo.name.includes('14')) {
+        url.searchParams.append('type', 'vcorr_14d04h')
+        url.searchParams.append('symbol', getBaseSymbol(symbolInfo))
+      } else if (symbolInfo.name.includes('30')) {
+        url.searchParams.append('type', 'vcorr_30d06h')
+        url.searchParams.append('symbol', getBaseSymbol(symbolInfo))
+      } else if (symbolInfo.name.includes('60')) {
+        url.searchParams.append('type', 'vcorr_60d12h')
+        url.searchParams.append('symbol', getBaseSymbol(symbolInfo))
+      } else if (symbolInfo.name.includes('90')) {
+        url.searchParams.append('type', 'vcorr_90d24h')
+        url.searchParams.append('symbol', getBaseSymbol(symbolInfo))
+      } else {
+        url.searchParams.append('type', 'vcorr_03d01h')
+        console.error('Unknown symbolInfo.name', symbolInfo.name)
+      }
+      return url.toString()
+    } else {
+      console.error('Unknown symbolInfo.name', symbolInfo.name)
+    }
+    // error default
+    return `https://test-api.volmex.finance/public/iv/history`
+  }
+  const urlString = getUrlString(symbolInfo)
+
+  const url = new URL(urlString)
   url.searchParams.append('resolution', resolutionToInterval[resolution]) // 1, 5, 15, 30, 60
   url.searchParams.append(
     'from',
@@ -259,16 +313,101 @@ async function getCryptoCompareKlines(
 function getAllSymbols() {
   const indexAssets = getTokenList('index', 80001)
 
-  const volmexSymbols = indexAssets.map((index) => {
+  const volmexSymbolsIV = indexAssets.map((index) => {
     const symbol = index.symbol === 'ETH' ? 'EVIV' : 'BVIV'
     return {
       symbol: symbol,
       full_name: symbol,
-      description: `${index.name} Volatility Index`,
+      description: `${index.name} Implied Volatility Index`,
       exchange: 'Volmex',
       type: 'crypto',
     }
   })
+
+  const volmexSymbolsRV = indexAssets.map((index) => {
+    const symbol = index.symbol === 'ETH' ? 'EVRV' : 'BVRV'
+    return {
+      symbol: symbol,
+      full_name: symbol,
+      description: `${index.name} Realized Volatility Index`,
+      exchange: 'Volmex',
+      type: 'crypto',
+    }
+  })
+
+  const volmexSymbolsRP = indexAssets.map((index) => {
+    const symbol = index.symbol === 'ETH' ? 'EVRP' : 'BVRP'
+    return {
+      symbol: symbol,
+      full_name: symbol,
+      description: `${index.name} Risk Premium Index`,
+      exchange: 'Volmex',
+      type: 'crypto',
+    }
+  })
+
+  const volmexSymbolsVCORR = [
+    ...indexAssets.map((index) => {
+      const symbol = index.symbol === 'ETH' ? 'EVCORR3' : 'BVCORR3'
+      return {
+        symbol: symbol,
+        full_name: symbol,
+        description: `${index.name} Spot Volatility 3 Day Correlation Index`,
+        exchange: 'Volmex',
+        type: 'crypto',
+      }
+    }),
+    ...indexAssets.map((index) => {
+      const symbol = index.symbol === 'ETH' ? 'EVCORR7' : 'BVCORR7'
+      return {
+        symbol: symbol,
+        full_name: symbol,
+        description: `${index.name} Spot Volatility 7 Day Correlation Index`,
+        exchange: 'Volmex',
+        type: 'crypto',
+      }
+    }),
+    ...indexAssets.map((index) => {
+      const symbol = index.symbol === 'ETH' ? 'EVCORR14' : 'BVCORR14'
+      return {
+        symbol: symbol,
+        full_name: symbol,
+        description: `${index.name} Spot Volatility 14 Day Correlation Index`,
+        exchange: 'Volmex',
+        type: 'crypto',
+      }
+    }),
+    ...indexAssets.map((index) => {
+      const symbol = index.symbol === 'ETH' ? 'EVCORR30' : 'BVCORR30'
+      return {
+        symbol: symbol,
+        full_name: symbol,
+        description: `${index.name} Spot Volatility 30 Day Correlation Index`,
+        exchange: 'Volmex',
+        type: 'crypto',
+      }
+    }),
+    ...indexAssets.map((index) => {
+      const symbol = index.symbol === 'ETH' ? 'EVCORR60' : 'BVCORR60'
+      return {
+        symbol: symbol,
+        full_name: symbol,
+        description: `${index.name} Spot Volatility 60 Day Correlation Index`,
+        exchange: 'Volmex',
+        type: 'crypto',
+      }
+    }),
+    ...indexAssets.map((index) => {
+      const symbol = index.symbol === 'ETH' ? 'EVCORR90' : 'BVCORR90'
+      return {
+        symbol: symbol,
+        full_name: symbol,
+        description: `${index.name} Spot Volatility 90 Day Correlation Index`,
+        exchange: 'Volmex',
+        type: 'crypto',
+      }
+    }),
+  ]
 
   const volmexSymbolsPerps: any[] = [] /*indexAssets.map((index) => ({
     symbol: index.symbol,
@@ -277,6 +416,12 @@ function getAllSymbols() {
     exchange: 'VolmexPerps',
     type: 'crypto',
   }))*/
+
+  const volmexSymbols = volmexSymbolsIV
+    .concat(volmexSymbolsRV)
+    .concat(volmexSymbolsRP)
+    .concat(volmexSymbolsVCORR)
+    .concat(volmexSymbolsPerps)
 
   const extraSymbols = [
     {
@@ -295,7 +440,7 @@ function getAllSymbols() {
     },
   ]
 
-  return volmexSymbols.concat(extraSymbols as any).concat(volmexSymbolsPerps)
+  return volmexSymbols.concat(extraSymbols as any)
 }
 
 export default {
@@ -476,6 +621,7 @@ export default {
     subscribeUID: string,
     onResetCacheNeededCallback: (s: any) => void
   ) => {
+    if (!(symbolInfo.name === 'EVIV' || symbolInfo.name === 'BVIV')) return
     console.log('[subscribeBars]: Method call with subscribeUID:', subscribeUID)
     subscribeOnStream(
       symbolInfo,

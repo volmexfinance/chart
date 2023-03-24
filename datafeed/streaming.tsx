@@ -38,7 +38,7 @@ async function subscribeToReader(subscribeUID: string, symbol: string, resolutio
   //   return
   // }
   subscriptionItem.firstTime = false
-  const url = new URL('https://rest-v1.volmex.finance/public/streaming')
+  const url = new URL('https://test-api.volmex.finance/public/iv/streaming')
 
   const resolutionMap = {
     '1': '1',
