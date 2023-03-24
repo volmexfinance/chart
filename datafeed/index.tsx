@@ -69,12 +69,12 @@ async function getVolmexKlines(symbolInfo: SymbolInfo, resolution: Resolution, f
       return url.toString()
     } else if (symbolInfo.name.includes('VRV')) {
       const url = new URL(`https://test-api.volmex.finance/public/rv/history`)
-      url.searchParams.append('type', 'VRV')
+      url.searchParams.append('type', 'rv')
       url.searchParams.append('symbol', getBaseSymbol(symbolInfo))
       return url.toString()
     } else if (symbolInfo.name.includes('VRP')) {
       const url = new URL(`https://test-api.volmex.finance/public/rv/history`)
-      url.searchParams.append('type', 'VRP')
+      url.searchParams.append('type', 'vrp')
       url.searchParams.append('symbol', getBaseSymbol(symbolInfo))
       return url.toString()
     } else if (symbolInfo.name.includes('VCORR')) {
