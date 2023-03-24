@@ -1,4 +1,4 @@
-import type { LibrarySymbolInfo } from '../charting_library/charting_library'
+import type { LibrarySymbolInfo, ResolutionString } from '../charting_library/charting_library'
 import { getTokenList } from '../utils'
 import { subscribeOnStream, unsubscribeFromStream } from './streaming'
 
@@ -30,25 +30,47 @@ type SymbolInfo = {
   exchange: string
   full_name: string
 }
-export type Resolution = 1 | 5 | 15 | 60 | '1D'
+export type Resolution = '1' | '5' | '15' | '60' | '1D'
 async function getVolmexKlines(symbolInfo: SymbolInfo, resolution: Resolution, from: number, to: number) {
   var split_symbol = symbolInfo.name.split(/[:/]/)
   const resolutionToInterval = {
-    1: '1',
-    5: '5',
-    15: '15',
-    60: '60',
-    240: '60',
+    '1': '1',
+    '5': '5',
+    '15': '15',
+    '60': '60',
+    '240': '60',
     '1D': 'D',
     // ''
+  }
+  const calculateBack3Days = (to: number) => {
+    const back3Days = 3 * 24 * 60 * 60
+    return to - back3Days
+  }
+  const calculateBack40Days = (to: number) => {
+    const back40Days = 40 * 24 * 60 * 60
+    return to - back40Days
+  }
+  const calculateBack1000Days = (to: number) => {
+    const back1000Days = 1000 * 24 * 60 * 60
+    return to - back1000Days
   }
   const symbol = split_symbol[0]
   const url = new URL(`https://rest-v1.volmex.finance/public/history`)
   url.searchParams.append('symbol', symbol)
   url.searchParams.append('resolution', resolutionToInterval[resolution]) // 1, 5, 15, 30, 60
-  url.searchParams.append('from', String(from))
+  url.searchParams.append(
+    'from',
+    String(
+      resolution === '1' || resolution === '5' || resolution === '15'
+        ? calculateBack3Days(to)
+        : resolution === '60'
+        ? calculateBack40Days(to)
+        : resolution === '1D'
+        ? calculateBack1000Days(to)
+        : from
+    )
+  )
   url.searchParams.append('to', String(to))
-
   const response = await fetch(url, {
     method: 'GET',
     headers: {
@@ -80,11 +102,11 @@ async function getPerpKlines(symbolInfo: SymbolInfo, resolution: Resolution, fro
   const baseToken = symbolToBaseToken[split_symbol[0]] ?? '0x24bf203aaf9afb0d4fc03001a368ceab11b92d93'
   const bars: any[] = []
   const resolutionToInterval = {
-    1: '1m',
-    5: '5m',
-    15: '15m',
-    60: '1h',
-    240: '4h',
+    '1': '1m',
+    '5': '5m',
+    '15': '15m',
+    '60': '1h',
+    '240': '4h',
     '1D': '1d',
     // ''
   }
@@ -145,11 +167,11 @@ async function getPerpKlines(symbolInfo: SymbolInfo, resolution: Resolution, fro
 async function getBinanceKlines(symbolInfo: SymbolInfo, resolution: Resolution, from: number, to: number) {
   var split_symbol = symbolInfo.name.split(/[:/]/)
   const resolutionToInterval = {
-    1: '1m',
-    5: '5m',
-    15: '15m',
-    60: '1h',
-    240: '4h',
+    '1': '1m',
+    '5': '5m',
+    '15': '15m',
+    '60': '1h',
+    '240': '4h',
     '1D': '1d',
     // ''
   }
@@ -204,7 +226,7 @@ async function getCryptoCompareKlines(
   exchange: string
 ) {
   var split_symbol = symbolInfo.name.split(/[:/]/)
-  const urlPath = resolution === '1D' ? '/data/histoday' : resolution >= 60 ? '/data/histohour' : '/data/histominute'
+  const urlPath = resolution === '1D' ? '/data/histoday' : resolution == '60' ? '/data/histohour' : '/data/histominute'
   const qs = {
     e: exchange,
     fsym: split_symbol[0],
@@ -322,7 +344,7 @@ export default {
       has_intraday: true,
       has_no_volume: true,
       has_weekly_and_monthly: false,
-      supported_resolutions: configurationData.supported_resolutions,
+      supported_resolutions: configurationData.supported_resolutions as ResolutionString[],
       volume_precision: 2,
       data_status: 'pulsed',
     }
@@ -338,7 +360,6 @@ export default {
     onHistoryCallback: (s: any, options: any) => void,
     onErrorCallback: (s: any) => void
   ) => {
-    console.log({ resolution })
     const { from: unsafeFrom, to, firstDataRequest } = periodParams
     const from = Math.max(0, unsafeFrom)
     const { exchange } = symbolInfo
