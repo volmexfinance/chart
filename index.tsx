@@ -4,6 +4,7 @@ import {
   ChartingLibraryWidgetOptions,
   IChartingLibraryWidget,
   ResolutionString,
+  LanguageCode,
 } from './charting_library/charting_library'
 import Datafeed from './datafeed'
 
@@ -59,7 +60,7 @@ export class TVChart extends React.PureComponent<Partial<ChartContainerProps>, C
       container: this.ref.current,
       library_path: this.props.libraryPath as string,
 
-      locale: 'en',
+      locale: navigator.language.slice(0, 2) as LanguageCode,
       disabled_features: [
         'use_localstorage_for_settings',
         'header_saveload',
@@ -103,6 +104,12 @@ export class TVChart extends React.PureComponent<Partial<ChartContainerProps>, C
         'scalesProperties.showSymbolLabels': true,
       },
       custom_css_url: '../tvcharts.css',
+      compare_symbols: [
+        {
+          symbol: 'BTC',
+          title: 'BTC',
+        },
+      ],
     }
 
     const tvWidget = new widget(widgetOptions)
@@ -115,6 +122,7 @@ export class TVChart extends React.PureComponent<Partial<ChartContainerProps>, C
         if (this.props.compareSymbol) {
           tvWidget.chart().createStudy('Compare', true, false, ['open', this.props.compareSymbol])
           tvWidget.chart().applyOverrides({ 'scalesProperties.showSymbolLabels': true })
+          tvWidget.chart().ap
         }
 
         this.tvWidget = tvWidget

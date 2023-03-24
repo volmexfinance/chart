@@ -79,22 +79,22 @@ async function getVolmexKlines(symbolInfo: SymbolInfo, resolution: Resolution, f
       return url.toString()
     } else if (symbolInfo.name.includes('VCORR')) {
       const url = new URL(`https://test-api.volmex.finance/public/vcorr/history`)
-      if (symbolInfo.name.includes('VCORR3')) {
+      if (symbolInfo.name.includes('VCORR3D')) {
         url.searchParams.append('type', 'vcorr_03d01h')
         url.searchParams.append('symbol', getBaseSymbol(symbolInfo))
-      } else if (symbolInfo.name.includes('7')) {
+      } else if (symbolInfo.name.includes('VCORR1W')) {
         url.searchParams.append('type', 'vcorr_07d02h')
         url.searchParams.append('symbol', getBaseSymbol(symbolInfo))
-      } else if (symbolInfo.name.includes('14')) {
+      } else if (symbolInfo.name.includes('VCORR2W')) {
         url.searchParams.append('type', 'vcorr_14d04h')
         url.searchParams.append('symbol', getBaseSymbol(symbolInfo))
-      } else if (symbolInfo.name.includes('30')) {
+      } else if (symbolInfo.name.includes('VCORR1M')) {
         url.searchParams.append('type', 'vcorr_30d06h')
         url.searchParams.append('symbol', getBaseSymbol(symbolInfo))
-      } else if (symbolInfo.name.includes('60')) {
+      } else if (symbolInfo.name.includes('VCORR2M')) {
         url.searchParams.append('type', 'vcorr_60d12h')
         url.searchParams.append('symbol', getBaseSymbol(symbolInfo))
-      } else if (symbolInfo.name.includes('90')) {
+      } else if (symbolInfo.name.includes('VCORR3M')) {
         url.searchParams.append('type', 'vcorr_90d24h')
         url.searchParams.append('symbol', getBaseSymbol(symbolInfo))
       } else {
@@ -348,7 +348,7 @@ function getAllSymbols() {
 
   const volmexSymbolsVCORR = [
     ...indexAssets.map((index) => {
-      const symbol = index.symbol === 'ETH' ? 'EVCORR3' : 'BVCORR3'
+      const symbol = index.symbol === 'ETH' ? 'EVCORR3D' : 'BVCORR3D'
       return {
         symbol: symbol,
         full_name: symbol,
@@ -358,51 +358,51 @@ function getAllSymbols() {
       }
     }),
     ...indexAssets.map((index) => {
-      const symbol = index.symbol === 'ETH' ? 'EVCORR7' : 'BVCORR7'
+      const symbol = index.symbol === 'ETH' ? 'EVCORR1W' : 'BVCORR1W'
       return {
         symbol: symbol,
         full_name: symbol,
-        description: `${index.name} Spot Volatility 7 Day Correlation Index`,
+        description: `${index.name} Spot Volatility 1 Week Correlation Index`,
         exchange: 'Volmex',
         type: 'crypto',
       }
     }),
     ...indexAssets.map((index) => {
-      const symbol = index.symbol === 'ETH' ? 'EVCORR14' : 'BVCORR14'
+      const symbol = index.symbol === 'ETH' ? 'EVCORR2W' : 'BVCORR2W'
       return {
         symbol: symbol,
         full_name: symbol,
-        description: `${index.name} Spot Volatility 14 Day Correlation Index`,
+        description: `${index.name} Spot Volatility 2 Week Correlation Index`,
         exchange: 'Volmex',
         type: 'crypto',
       }
     }),
     ...indexAssets.map((index) => {
-      const symbol = index.symbol === 'ETH' ? 'EVCORR30' : 'BVCORR30'
+      const symbol = index.symbol === 'ETH' ? 'EVCORR1M' : 'BVCORR1M'
       return {
         symbol: symbol,
         full_name: symbol,
-        description: `${index.name} Spot Volatility 30 Day Correlation Index`,
+        description: `${index.name} Spot Volatility 1 Month Correlation Index`,
         exchange: 'Volmex',
         type: 'crypto',
       }
     }),
     ...indexAssets.map((index) => {
-      const symbol = index.symbol === 'ETH' ? 'EVCORR60' : 'BVCORR60'
+      const symbol = index.symbol === 'ETH' ? 'EVCORR2M' : 'BVCORR2M'
       return {
         symbol: symbol,
         full_name: symbol,
-        description: `${index.name} Spot Volatility 60 Day Correlation Index`,
+        description: `${index.name} Spot Volatility 2 Month Correlation Index`,
         exchange: 'Volmex',
         type: 'crypto',
       }
     }),
     ...indexAssets.map((index) => {
-      const symbol = index.symbol === 'ETH' ? 'EVCORR90' : 'BVCORR90'
+      const symbol = index.symbol === 'ETH' ? 'EVCORR3M' : 'BVCORR3M'
       return {
         symbol: symbol,
         full_name: symbol,
-        description: `${index.name} Spot Volatility 90 Day Correlation Index`,
+        description: `${index.name} Spot Volatility 3 Month Correlation Index`,
         exchange: 'Volmex',
         type: 'crypto',
       }
