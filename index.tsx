@@ -154,7 +154,6 @@ export class TVChart extends React.PureComponent<Partial<ChartContainerProps>, C
           tvWidget.chart().applyOverrides({ 'scalesProperties.showSymbolLabels': true })
         }
 
-        console.log('testing: tvWidget', tvWidget)
         this.tvWidget = tvWidget
 
         // const button = tvWidget.createButton()
@@ -195,6 +194,8 @@ export class TVChart extends React.PureComponent<Partial<ChartContainerProps>, C
         } else if (themeName.toLocaleLowerCase() === 'light' && this.props.darkMode === true) {
           tvWidget.changeTheme('Dark')
         }
+
+        tvWidget.setSymbol(this.props.symbol || 'EVIV', 15, () => {})
         tvWidget.chart().removeAllStudies()
         if (this.props.compareSymbols) {
           for (const symbol of this.props.compareSymbols) {

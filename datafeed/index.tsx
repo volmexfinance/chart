@@ -623,6 +623,7 @@ export default {
     subscribeUID: string,
     onResetCacheNeededCallback: (s: any) => void
   ) => {
+    return
     if (!(symbolInfo.name === 'EVIV' || symbolInfo.name === 'BVIV')) return
     console.log('[subscribeBars]: Method call with subscribeUID:', subscribeUID)
     subscribeOnStream(
