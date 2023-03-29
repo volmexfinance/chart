@@ -91,7 +91,7 @@ export class TVChart extends React.PureComponent<Partial<ChartContainerProps>, C
       studies_overrides: this.props.studiesOverrides,
       overrides: {
         // "mainSeriesProperties.showCountdown": true,
-        'paneProperties.background': this.props.darkMode ? 'rgba(17, 24, 39, 1)' : 'rgb(249, 250, 251)',
+        'paneProperties.background': this.props.darkMode ? 'rgba(29, 33, 39, 1)' : 'rgb(249, 250, 251)',
         // 'scalesProperties.background': this.props.darkMode ? 'rgba(17, 24, 39, 1)' : 'rgba(249, 250, 251, 1)',
 
         // "paneProperties.vertGridProperties.color": "#363c4e",
@@ -110,7 +110,10 @@ export class TVChart extends React.PureComponent<Partial<ChartContainerProps>, C
     const tvWidget = new widget(widgetOptions)
     console.log({ tvWidget })
     // set chart type to area
-
+    
+    if (this.props.darkMode) {
+      tvWidget.applyOverrides({ 'paneProperties.background': 'rgba(29, 33, 39, 1)', 'paneProperties.backgroundType' : 'solid' })
+    }
     tvWidget.onChartReady(() => {
       tvWidget.headerReady().then(() => {
         tvWidget.chart().setChartType(this.props.defaultLines ?? 3)

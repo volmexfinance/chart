@@ -15,8 +15,8 @@
 }
 
 .theme-dark:root {
-	/* --tv-color-platform-background: rgb(82, 170, 193); */
-	--tv-color-pane-background: rgb(17, 24, 39);
+	/* --tv-color-platform-background: rgba(82, 170, 193, 0); */
+	--tv-color-pane-background: rgba(29, 33, 39, 1);
 	/* --tv-color-pane-background-secondary: rgb(249, 185, 233);
 	--tv-color-toolbar-button-background-hover: rgb(244, 215, 143);
 	--tv-color-toolbar-button-background-secondary-hover: red;
