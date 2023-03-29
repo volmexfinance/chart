@@ -71,6 +71,7 @@ export class TVChart extends React.PureComponent<Partial<ChartContainerProps>, C
         // 'auto_enable_symbol_labels', // hide symbol labels
         // 'study_overlay_compare_legend_option',
         // 'symbol_info',
+        "popup_hints",
         'header_screenshot',
         'header_fullscreen_button',
         'create_volume_indicator_by_default',
