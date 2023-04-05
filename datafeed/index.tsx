@@ -1,7 +1,10 @@
 import type { LibrarySymbolInfo, ResolutionString } from '../charting_library/charting_library'
 import { getTokenList } from '../utils'
 import { subscribeOnStream, unsubscribeFromStream } from './streaming'
-
+const apiBaseUrl =
+  typeof window !== `undefined` && window.location.hostname.includes('volmex.finance')
+    ? 'https://rest-v1.volmex.finance'
+    : 'https://test-api.volmex.finance'
 const lastBarsCache = new Map()
 
 const configurationData = {
@@ -64,21 +67,21 @@ async function getVolmexKlines(symbolInfo: SymbolInfo, resolution: Resolution, f
   }
   const getUrlString = (symbolInfo: SymbolInfo) => {
     if (symbolInfo.name.includes('VIV')) {
-      const url = new URL(`https://test-api.volmex.finance/public/iv/history`)
+      const url = new URL(`${apiBaseUrl}/public/iv/history`)
       url.searchParams.append('symbol', symbol)
       return url.toString()
     } else if (symbolInfo.name.includes('VRV')) {
-      const url = new URL(`https://test-api.volmex.finance/public/rv/history`)
+      const url = new URL(`${apiBaseUrl}/public/rv/history`)
       url.searchParams.append('type', 'rv')
       url.searchParams.append('symbol', getBaseSymbol(symbolInfo))
       return url.toString()
     } else if (symbolInfo.name.includes('VRP')) {
-      const url = new URL(`https://test-api.volmex.finance/public/rv/history`)
+      const url = new URL(`${apiBaseUrl}/public/rv/history`)
       url.searchParams.append('type', 'vrp')
       url.searchParams.append('symbol', getBaseSymbol(symbolInfo))
       return url.toString()
     } else if (symbolInfo.name.includes('VCORR')) {
-      const url = new URL(`https://test-api.volmex.finance/public/vcorr/history`)
+      const url = new URL(`${apiBaseUrl}/public/vcorr/history`)
       if (symbolInfo.name.includes('VCORR3D')) {
         url.searchParams.append('type', 'vcorr_03d01h')
         url.searchParams.append('symbol', getBaseSymbol(symbolInfo))
@@ -106,7 +109,7 @@ async function getVolmexKlines(symbolInfo: SymbolInfo, resolution: Resolution, f
       console.error('Unknown symbolInfo.name', symbolInfo.name)
     }
     // error default
-    return `https://test-api.volmex.finance/public/iv/history`
+    return `${apiBaseUrl}/public/iv/history`
   }
   const urlString = getUrlString(symbolInfo)
 
@@ -466,24 +469,20 @@ function getAllSymbols() {
     acc.push(...volmexSymbols)
     return acc
   }, [])
-  console.log({ volmexSymbols })
-  const extraSymbols = [
-    {
-      symbol: 'ETH/USD',
-      full_name: 'ETH/USD',
-      description: `Ethereum USD price`,
-      exchange: 'Coinbase',
-      type: 'crypto',
-    },
-    {
-      symbol: 'BTC/USD',
-      full_name: 'BTC/USD',
-      description: `Bitcoin USD price`,
-      exchange: 'Coinbase',
-      type: 'crypto',
-    },
-  ]
 
+  const generateExtraSymbols = () => {
+    return indexAssets.map((i) => {
+      return {
+        symbol: i.symbol + '/USD',
+        full_name: i.name + '/USD',
+        description: `${i.name} USD price`,
+        exchange: 'Coinbase',
+        type: 'crypto',
+      }
+    })
+  }
+
+  const extraSymbols = generateExtraSymbols()
   return volmexSymbols.concat(extraSymbols as any)
 }
 
