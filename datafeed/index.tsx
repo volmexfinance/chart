@@ -460,11 +460,19 @@ function getAllSymbols() {
     if (onlyRVandRP) {
       return [volmexSymbolRV, volmexSymbolRP]
     } else {
-      return [volmexSymbolIV, volmexSymbolRV, volmexSymbolRP, ...volmexSymbolsVCORR, ...volmexSymbolsPerps]
+      return [volmexSymbolIV, volmexSymbolRV, volmexSymbolRP, ...volmexSymbolsVCORR] //,...volmexSymbolsPerps]
     }
   }
 
-  const volmexSymbols = indexAssets.reduce<Array<string>>((acc, index) => {
+  const volmexSymbols = indexAssets.reduce<
+    Array<{
+      symbol: string
+      full_name: string
+      description: string
+      exchange: string
+      type: string
+    }>
+  >((acc, index) => {
     const volmexSymbols = getVolmexSymbolsFromIndex(index, index.onlyRVandRP)
     acc.push(...volmexSymbols)
     return acc
@@ -497,10 +505,11 @@ export default {
     const symbols = await getAllSymbols()
     const newSymbols = symbols.filter((symbol) => {
       const isExchangeValid = exchange === '' || symbol.exchange === exchange
+      if (!isExchangeValid) return false
       const isFullSymbolContainsInput = symbol.full_name.toLowerCase().indexOf(userInput.toLowerCase()) !== -1
       const isDescriptionContainsInput = symbol.description.toLowerCase().indexOf(userInput.toLowerCase()) !== -1
       const isExchangeContainsInput = symbol.exchange.toLowerCase().indexOf(userInput.toLowerCase()) !== -1
-      return isExchangeValid && (isFullSymbolContainsInput || isDescriptionContainsInput || isExchangeContainsInput)
+      return isFullSymbolContainsInput || isDescriptionContainsInput || isExchangeContainsInput
     })
     onResultReadyCallback(newSymbols)
   },
@@ -511,7 +520,8 @@ export default {
     onResolveErrorCallback: (s: any) => void
   ) => {
     const symbols = await getAllSymbols()
-    const symbolItem = symbols.find(({ full_name }) => full_name === symbolName)
+    console.log({ symbols })
+    const symbolItem = symbols.find(({ symbol }) => symbol === symbolName)
     console.log('[resolveSymbol]: Method call', symbolName, symbolItem?.exchange)
     if (!symbolItem) {
       console.log('[resolveSymbol]: Cannot resolve symbol', symbolName)
