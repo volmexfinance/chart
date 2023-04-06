@@ -63,6 +63,22 @@ async function getVolmexKlines(symbolInfo: SymbolInfo, resolution: Resolution, f
 
   const getBaseSymbol = (symbolInfo: SymbolInfo) => {
     // current naming conventions in volmex docs use E for ETH and B for BTC as the first letter of the symbol
+    if (symbolInfo.name[0] === 'E' || (symbolInfo.name[0] === 'B' && !symbolInfo.name.includes('BNB'))) {
+      return 'ETH'
+    } else if (symbolInfo.name[0] === 'B') {
+      return 'BTC'
+    } else {
+      const trySymbolVIV = symbolInfo.name.split('VIV').length > 1 && symbolInfo.name.split('VIV')[0]
+      const trySymbolVCORR = symbolInfo.name.split('VCORR').length > 1 && symbolInfo.name.split('VCORR')[0]
+      const trySymbolVRV = symbolInfo.name.split('VRV').length > 1 && symbolInfo.name.split('VRV')[0]
+      const trySymbolVRP = symbolInfo.name.split('VRP').length > 1 && symbolInfo.name.split('VRP')[0]
+      const trySymbol = trySymbolVIV || trySymbolVCORR || trySymbolVRV || trySymbolVRP
+      if (!trySymbol) {
+        throw 'Could not get base symbol'
+      }
+      console.log({ trySymbol })
+      return trySymbol
+    }
     return symbolInfo.name[0] === 'E' ? 'ETH' : 'BTC'
   }
   const getUrlString = (symbolInfo: SymbolInfo) => {
