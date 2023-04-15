@@ -53,6 +53,17 @@ export function getAllSymbols() {
     'XLM',
     'LDO',
   ]
+
+  const getVolmexSymbolIV = (baseSymbol: string, name: string) => {
+    return {
+      symbol: baseSymbol + 'VIV',
+      full_name: baseSymbol + 'VIV',
+      description: `${name} Implied Volatility Index`,
+      exchange: 'Volmex',
+      type: 'crypto',
+    }
+  }
+
   const getVolmexSymbolRP = (baseSymbol: string, name: string) => {
     return {
       symbol: baseSymbol + 'VRP',
@@ -63,24 +74,24 @@ export function getAllSymbols() {
     }
   }
 
-  const getVolmexSymbolRV = (baseSymbol: string, name: string) => {
-    return {
-      symbol: baseSymbol + 'VRV',
-      full_name: baseSymbol + 'VRV',
-      description: `${name} Realized Volatility Index`,
-      exchange: 'Volmex',
-      type: 'crypto',
-    }
+  const getVolmexSymbolsRV = (baseSymbol: string, name: string) => {
+    //rv_01,rv_03,rv_07,rv_14,rv_30,rv_60,rv_90.
+    const times = ['1D', '3D', '1W', '2W', '1M', '2M', '3M']
+    const timeName = ['1 Day', '3 Day', '1 Week', '2 Week', '1 Month', '2 Month', '3 Month']
+
+    // times and timeName into json
+    const rvList = times.map((time, index) => {
+      return {
+        symbol: baseSymbol + 'VRV' + time,
+        full_name: baseSymbol + 'VRV' + time,
+        description: `${name} Realized Volatility ${timeName[index]} Index`,
+        exchange: 'Volmex',
+        type: 'crypto',
+      }
+    })
+    return rvList
   }
-  const getVolmexSymbolIV = (baseSymbol: string, name: string) => {
-    return {
-      symbol: baseSymbol + 'VIV',
-      full_name: baseSymbol + 'VIV',
-      description: `${name} Implied Volatility Index`,
-      exchange: 'Volmex',
-      type: 'crypto',
-    }
-  }
+
   const getVolmexSymbolsVCORR = (baseSymbol: string, name: string) => {
     return [
       {
@@ -130,7 +141,7 @@ export function getAllSymbols() {
   const getVolmexSymbolsFromIndex = (index: { symbol: string; name: string }, onlyRVandRP: boolean) => {
     const baseSymbol = index.symbol === 'ETH' ? 'E' : index.symbol === 'BTC' ? 'B' : index.symbol
     const volmexSymbolIV = getVolmexSymbolIV(baseSymbol, index.name)
-    const volmexSymbolRV = getVolmexSymbolRV(baseSymbol, index.name)
+    const volmexSymbolsRV = getVolmexSymbolsRV(baseSymbol, index.name)
     const volmexSymbolRP = getVolmexSymbolRP(baseSymbol, index.name)
     const volmexSymbolsVCORR = getVolmexSymbolsVCORR(baseSymbol, index.name)
 
@@ -143,9 +154,9 @@ export function getAllSymbols() {
       }))*/
 
     if (onlyRVandRP) {
-      return [volmexSymbolRV, volmexSymbolRP]
+      return [...volmexSymbolsRV, volmexSymbolRP]
     } else {
-      return [volmexSymbolIV, volmexSymbolRV, volmexSymbolRP, ...volmexSymbolsVCORR] //,...volmexSymbolsPerps]
+      return [volmexSymbolIV, ...volmexSymbolsRV, volmexSymbolRP, ...volmexSymbolsVCORR] //,...volmexSymbolsPerps]
     }
   }
 
@@ -174,7 +185,7 @@ export function getAllSymbols() {
       }
     })
   }
-
+  console.log({ volmexSymbols })
   const extraSymbols = generateExtraSymbols()
-  return volmexSymbols.concat(extraSymbols as any)
+  return volmexSymbols.concat(extraSymbols)
 }

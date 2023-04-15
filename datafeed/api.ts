@@ -29,9 +29,10 @@ async function getVolmexKlines(symbolInfo: SymbolInfo, resolution: Resolution, f
 
   const getBaseSymbol = (symbolInfo: SymbolInfo) => {
     // current naming conventions in volmex docs use E for ETH and B for BTC as the first letter of the symbol
-    if (symbolInfo.name[0] === 'E' || (symbolInfo.name[0] === 'B' && !symbolInfo.name.includes('BNB'))) {
+    console.log({ symbolInfoBTC: symbolInfo })
+    if (symbolInfo.name[0] === 'E') {
       return 'ETH'
-    } else if (symbolInfo.name[0] === 'B') {
+    } else if (symbolInfo.name[0] === 'B' && !symbolInfo.name.includes('BNB')) {
       return 'BTC'
     } else {
       const trySymbolVIV = symbolInfo.name.split('VIV').length > 1 && symbolInfo.name.split('VIV')[0]
@@ -54,8 +55,27 @@ async function getVolmexKlines(symbolInfo: SymbolInfo, resolution: Resolution, f
       return url.toString()
     } else if (symbolInfo.name.includes('VRV')) {
       const url = new URL(`${apiBaseUrl}/public/rv/history`)
-      url.searchParams.append('type', 'rv')
       url.searchParams.append('symbol', getBaseSymbol(symbolInfo))
+      if (symbolInfo.name.includes('VRV1D')) {
+        url.searchParams.append('type', 'rv_01')
+      } else if (symbolInfo.name.includes('VRV3D')) {
+        url.searchParams.append('type', 'rv_03')
+      } else if (symbolInfo.name.includes('VRV1W')) {
+        url.searchParams.append('type', 'rv_07')
+      } else if (symbolInfo.name.includes('VRV2W')) {
+        url.searchParams.append('type', 'rv_14')
+      } else if (symbolInfo.name.includes('VRV1M')) {
+        url.searchParams.append('type', 'rv_30')
+      } else if (symbolInfo.name.includes('VRV2M')) {
+        url.searchParams.append('type', 'rv_60')
+      } else if (symbolInfo.name.includes('VRV3M')) {
+        url.searchParams.append('type', 'rv_90')
+      } else {
+        console.error('Could not get VRV type', {
+          symbolInfo,
+        })
+        throw 'Could not get VRV type'
+      }
       return url.toString()
     } else if (symbolInfo.name.includes('VRP')) {
       const url = new URL(`${apiBaseUrl}/public/rv/history`)
