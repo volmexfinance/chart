@@ -1,4 +1,4 @@
-import type { Resolution } from '.'
+import type { Resolution } from './types'
 
 // Make requests to CryptoCompare API
 export async function makeApiRequest(path: string) {
