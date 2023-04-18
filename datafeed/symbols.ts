@@ -178,7 +178,7 @@ export function getAllSymbols() {
     return indexAssets.map((i) => {
       return {
         symbol: i.symbol + '/USD',
-        full_name: i.name + '/USD',
+        full_name: i.symbol + '/USD',
         description: `${i.name} USD price`,
         exchange: 'Coinbase',
         type: 'crypto',
