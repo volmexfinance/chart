@@ -142,7 +142,7 @@ export function getAllSymbols() {
     const baseSymbol = index.symbol === 'ETH' ? 'E' : index.symbol === 'BTC' ? 'B' : index.symbol
     const volmexSymbolIV = getVolmexSymbolIV(baseSymbol, index.name)
     const volmexSymbolsRV = getVolmexSymbolsRV(baseSymbol, index.name)
-    const volmexSymbolRP = getVolmexSymbolRP(baseSymbol, index.name)
+    // const volmexSymbolRP = getVolmexSymbolRP(baseSymbol, index.name)
     const volmexSymbolsVCORR = getVolmexSymbolsVCORR(baseSymbol, index.name)
 
     const volmexSymbolsPerps: any[] = [] /*indexAssets.map((index) => ({
@@ -154,9 +154,9 @@ export function getAllSymbols() {
       }))*/
 
     if (onlyRVandRP) {
-      return [...volmexSymbolsRV, volmexSymbolRP]
+      return [...volmexSymbolsRV] //[...volmexSymbolsRV, volmexSymbolRP]
     } else {
-      return [volmexSymbolIV, ...volmexSymbolsRV, volmexSymbolRP, ...volmexSymbolsVCORR] //,...volmexSymbolsPerps]
+      return [volmexSymbolIV, ...volmexSymbolsRV, ...volmexSymbolsVCORR] //[volmexSymbolIV, ...volmexSymbolsRV, volmexSymbolRP, ...volmexSymbolsVCORR] //,...volmexSymbolsPerps]
     }
   }
 
