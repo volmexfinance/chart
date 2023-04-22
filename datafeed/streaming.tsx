@@ -38,7 +38,7 @@ async function subscribeToReader(subscribeUID: string, symbol: string, resolutio
   //   return
   // }
   subscriptionItem.firstTime = false
-  const url = new URL(`${process.env.REACT_APP_REST_URL}/public/streaming`)
+  const url = new URL('https://rest-v1.volmex.finance/public/streaming')
 
   const resolutionMap = {
     '1': '1',
