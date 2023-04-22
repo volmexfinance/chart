@@ -38,7 +38,7 @@ async function getVolmexKlines(symbolInfo: LibrarySymbolInfo, resolution: Resolu
     // ''
   }
   const symbol = split_symbol[0]
-  const url = new URL(`https://rest-v1.volmex.finance/public/history`)
+  const url = new URL(`${process.env.REACT_APP_REST_URL}/public/history`)
   url.searchParams.append('symbol', symbol)
   url.searchParams.append('resolution', resolutionToInterval[resolution]) // 1, 5, 15, 30, 60
   url.searchParams.append('from', String(from))
