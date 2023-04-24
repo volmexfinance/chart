@@ -17,6 +17,7 @@ export function getAllSymbols() {
     { symbol: 'AVAX', name: 'Avalanche', onlyRVandRP: true },
     { symbol: 'UNI', name: 'Uniswap', onlyRVandRP: true },
     { symbol: 'ATOM', name: 'Cosmos', onlyRVandRP: true },
+    { symbol: 'TON', name: 'Toncoin', onlyRVandRP: true },
     { symbol: 'LINK', name: 'Chainlink', onlyRVandRP: true },
     { symbol: 'LEO', name: 'LEO', onlyRVandRP: true },
     { symbol: 'XMR', name: 'Monero', onlyRVandRP: true },
