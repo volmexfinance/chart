@@ -1,7 +1,12 @@
 import { apiBaseUrl } from './constants'
-import type { Resolution, SymbolInfo } from './types'
+import type { Bar, Resolution, SymbolInfo } from './types'
 
-async function getVolmexKlines(symbolInfo: SymbolInfo, resolution: Resolution, from: number, to: number) {
+async function getVolmexKlines(
+  symbolInfo: SymbolInfo,
+  resolution: Resolution,
+  from: number,
+  to: number
+): Promise<Bar[]> {
   var split_symbol = symbolInfo.name.split(/[:/]/)
   const resolutionToInterval = {
     '1': '1',
@@ -152,7 +157,7 @@ async function getVolmexKlines(symbolInfo: SymbolInfo, resolution: Resolution, f
   return bars
 }
 
-async function getPerpKlines(symbolInfo: SymbolInfo, resolution: Resolution, from: number, to: number) {
+async function getPerpKlines(symbolInfo: SymbolInfo, resolution: Resolution, from: number, to: number): Promise<Bar[]> {
   var split_symbol = symbolInfo.name.split(/[:/]/)
   const symbolToBaseToken: { [index: string]: string } = {
     ETH: '0x24bf203aaf9afb0d4fc03001a368ceab11b92d93',
@@ -223,7 +228,12 @@ async function getPerpKlines(symbolInfo: SymbolInfo, resolution: Resolution, fro
   return bars
 }
 
-async function getBinanceKlines(symbolInfo: SymbolInfo, resolution: Resolution, from: number, to: number) {
+async function getBinanceKlines(
+  symbolInfo: SymbolInfo,
+  resolution: Resolution,
+  from: number,
+  to: number
+): Promise<Bar[]> {
   var split_symbol = symbolInfo.name.split(/[:/]/)
   const resolutionToInterval = {
     '1': '1m',
@@ -281,10 +291,11 @@ async function getCryptoCompareKlines(
   symbolInfo: SymbolInfo,
   resolution: Resolution,
   from: number,
-  to: number,
-  exchange: string
-) {
+  to: number
+): Promise<Bar[]> {
   var split_symbol = symbolInfo.name.split(/[:/]/)
+  const { exchange } = symbolInfo
+
   const urlPath = resolution === '1D' ? '/data/histoday' : resolution == '60' ? '/data/histohour' : '/data/histominute'
   const qs = {
     e: exchange,
@@ -315,11 +326,49 @@ async function getCryptoCompareKlines(
   return bars
 }
 
-const api = {
-  getVolmexKlines,
-  getBinanceKlines,
-  getCryptoCompareKlines,
-  getPerpKlines,
+type FetchKlines = (symbolInfo: SymbolInfo, resolution: Resolution, from: number, to: number) => Promise<Bar[]>
+
+function middleware(fetchKlines: FetchKlines): FetchKlines {
+  return async (symbolInfo: SymbolInfo, resolution: Resolution, from: number, to: number): Promise<Bar[]> => {
+    let oldestBarTimestamp = to
+    let bars: Array<Bar> = []
+    // assumes that each fetch returns the bars closer on the `to` over the `from` range
+    while (true) {
+      const _bars = await fetchKlines(symbolInfo, resolution, from, oldestBarTimestamp)
+      if (_bars.length === 0) {
+        break
+      }
+      console.log('middleware loop', _bars[0].time)
+      bars = _bars.concat(bars)
+      oldestBarTimestamp = Math.floor(_bars[0].time / 1000)
+      console.log({
+        oldestBarTimestamp,
+        from,
+        _bars,
+      })
+      const resolutionToInterval = {
+        '1': 60,
+        '5': 300,
+        '15': 900,
+        '60': 3600,
+        '240': 14400,
+        '1D': 86400,
+      }
+      if (oldestBarTimestamp - resolutionToInterval[resolution] <= from) {
+        break
+      }
+    }
+    return bars
+  }
+}
+
+const api: {
+  [fnName: string]: FetchKlines
+} = {
+  getVolmexKlines: middleware(getVolmexKlines),
+  getBinanceKlines: middleware(getBinanceKlines),
+  getCryptoCompareKlines: getCryptoCompareKlines,
+  getPerpKlines: middleware(getPerpKlines),
 }
 
 export default api
