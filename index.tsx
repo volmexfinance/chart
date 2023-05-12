@@ -23,6 +23,7 @@ export interface ChartContainerProps extends ChartingLibraryWidgetOptions {
   studiesOverrides: ChartingLibraryWidgetOptions['studies_overrides']
   container: ChartingLibraryWidgetOptions['container']
   theme?: ChartingLibraryWidgetOptions['theme']
+  defaultLines?: number // bar klines area
 }
 
 export interface ChartContainerState {}
