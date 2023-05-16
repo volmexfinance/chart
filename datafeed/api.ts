@@ -333,10 +333,15 @@ function middleware(fetchKlines: FetchKlines): FetchKlines {
     let oldestBarTimestamp = to
     let bars: Array<Bar> = []
     // assumes that each fetch returns the bars closer on the `to` over the `from` range
+    // hotfix issue
+    let lastWasOnlyOne = false
     while (true) {
       const _bars = await fetchKlines(symbolInfo, resolution, from, oldestBarTimestamp)
-      if (_bars.length === 0) {
+      if (_bars.length === 0 || lastWasOnlyOne) {
         break
+      }
+      if (_bars.length === 1) {
+        lastWasOnlyOne = true
       }
       console.log('middleware loop', _bars[0].time)
       bars = _bars.concat(bars)
