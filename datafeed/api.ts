@@ -333,17 +333,25 @@ function middleware(fetchKlines: FetchKlines): FetchKlines {
     let oldestBarTimestamp = to
     let bars: Array<Bar> = []
     // assumes that each fetch returns the bars closer on the `to` over the `from` range
-    // hotfix issue
+    let deathspiral = 0
     let lastWasOnlyOne = false
     while (true) {
+      console.log('fetch loop')
       const _bars = await fetchKlines(symbolInfo, resolution, from, oldestBarTimestamp)
       if (_bars.length === 0 || lastWasOnlyOne) {
         break
       }
+
+      // fixes edge case where the last bar timestamp is greater than the (from timestamp + resolution)
+      //which can occur when there is not enough data to show bars for the complete range
       if (_bars.length === 1) {
         lastWasOnlyOne = true
       }
-      console.log('middleware loop', _bars[0].time)
+      deathspiral++
+      if (deathspiral > 100) {
+        console.error('deathspiral activated')
+        break
+      }
       bars = _bars.concat(bars)
       oldestBarTimestamp = Math.floor(_bars[0].time / 1000)
       console.log({

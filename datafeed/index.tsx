@@ -100,52 +100,14 @@ export default {
     } else if (exchange === 'Volmex') {
       try {
         const bars = await api.getVolmexKlines(symbolInfo, resolution, from, to)
-        const lastBarLen = lastBarsCache.get(symbolInfo.full_name)?.barsLen || bars.length
-        const keepBrowsing = lastBarsCache.get(symbolInfo.full_name)?.keepBrowsing
-        const counter = lastBarsCache.get(symbolInfo.full_name)?.counter || 0
-
-        console.log('bars', bars.length)
-        console.log('lastBarLen', lastBarLen)
-
-        // counter++
-
-        if (counter === 1000) {
-          console.log('death loop triggered, calling back with empty array')
-          onHistoryCallback([], { noData: true })
-
+        if (firstDataRequest) {
           lastBarsCache.set(symbolInfo.full_name, {
-            counter: counter + 1,
-            keepBrowsing: false,
-          })
-        } else if (firstDataRequest && keepBrowsing) {
-          onHistoryCallback(bars, { noData: false })
-
-          lastBarsCache.set(symbolInfo.full_name, {
-            keepBrowsing: true,
-            counter: counter + 1,
-            barsLen: bars.length,
             ...bars[bars.length - 1],
           })
-        } else if (bars.length && keepBrowsing) {
-          onHistoryCallback(bars, { noData: false })
-
-          lastBarsCache.set(symbolInfo.full_name, {
-            keepBrowsing: bars.length >= lastBarLen,
-            barsLen: bars.length,
-            counter: counter + 1,
-            ...bars[bars.length - 1],
-          })
-        } else {
-          lastBarsCache.set(symbolInfo.full_name, {
-            keepBrowsing: false,
-            counter: counter + 1,
-          })
-          onHistoryCallback(bars, { noData: true })
         }
 
+        onHistoryCallback(bars, { noData: bars.length === 0 ? true : false })
         console.log(`[getBars]: returned ${bars.length} bar(s)`)
-
-        return bars
       } catch (error) {
         console.log('[getBars]: Get error', error)
         onErrorCallback(error)
