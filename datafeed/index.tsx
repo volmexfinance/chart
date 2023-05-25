@@ -1,6 +1,9 @@
-import type { LibrarySymbolInfo } from '../charting_library/charting_library'
+import type { LibrarySymbolInfo, ResolutionString } from '../charting_library/charting_library'
 import { getTokenList } from '../utils'
+import api from './api'
 import { subscribeOnStream, unsubscribeFromStream } from './streaming'
+import { getAllSymbols } from './symbols'
+import type { Resolution, SymbolInfo } from './types'
 
 const lastBarsCache = new Map()
 
@@ -10,295 +13,6 @@ const configurationData = {
   supports_timescale_marks: false,
   supports_time: true,
   reset_cache_timeout: 100,
-}
-
-// https://api.thegraph.com/subgraphs/name/jonathanvolmex/perps-mumbai
-/*
-{
-    priceCandles(first: 4) {
-        open
-        high
-        low
-        close
-        timestamp
-        period
-    }
-}
-*/
-export type Resolution = 1 | 5 | 15 | 60 | '1D'
-async function getVolmexKlines(symbolInfo: LibrarySymbolInfo, resolution: Resolution, from: number, to: number) {
-  var split_symbol = symbolInfo.name.split(/[:/]/)
-  const resolutionToInterval = {
-    1: '1',
-    5: '5',
-    15: '15',
-    60: '60',
-    240: '60',
-    '1D': 'D',
-    // ''
-  }
-  const symbol = split_symbol[0]
-  const url = new URL(`https://rest-v1.volmex.finance/public/iv/history`)
-  url.searchParams.append('symbol', symbol)
-  url.searchParams.append('resolution', resolutionToInterval[resolution]) // 1, 5, 15, 30, 60
-  url.searchParams.append('from', String(from))
-  url.searchParams.append('to', String(to))
-
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      'content-type': 'application/json',
-    },
-  })
-  const data = await response.json()
-
-  const bars = data.t.map((timestamp: any, i: number) => {
-    return {
-      time: timestamp * 1000,
-      low: data.l[i],
-      high: data.h[i],
-      open: data.o[i],
-      close: data.c[i],
-      volume: data.v[i],
-    }
-  })
-
-  return bars
-}
-
-async function getPerpKlines(symbolInfo: LibrarySymbolInfo, resolution: Resolution, from: number, to: number) {
-  const { ticker } = symbolInfo
-
-  const tickerToConfig: {
-    [key: string]: {
-      url: string
-      symbolToBaseToken: { [index: string]: string }
-    }
-  } = {
-    'ETH Mark Mumbai': {
-      url: 'https://api.thegraph.com/subgraphs/name/jonathanvolmex/perps-mumbai',
-      symbolToBaseToken: {
-        ETH: '0xBE1bB5F011af3e5fB67Bd17b539989b34DC1D50a',
-        // BTC: '0x24bf203aaf9afb0d4fc03001a368ceab11b92d93', // TODO: remove with BTC base token address
-      },
-    },
-    'ETH Mark Arbitrum Goerli': {
-      url: 'https://api.thegraph.com/subgraphs/name/jonathanvolmex/perps-arbgoerli',
-      symbolToBaseToken: {
-        ETH: '0x3C5987D4d2d263167e1103B9A6C7ec5Ee11E3126',
-      },
-    },
-  }
-  const config = tickerToConfig[ticker ?? 'ETH Mark Mumbai']
-
-  var split_symbol = symbolInfo.name.split(/[:/]/)
-  console.log({ symbolInfo })
-  const baseToken = config.symbolToBaseToken[split_symbol[0]]
-  const bars: any[] = []
-  const resolutionToInterval = {
-    1: '1m',
-    5: '5m',
-    15: '15m',
-    60: '1h',
-    240: '4h',
-    '1D': '1d',
-    // ''
-  }
-  let limit = 1000
-  let index = 0
-  while (bars.length % limit === 0) {
-    const response = await fetch(config.url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        query: `query PriceCandles($from: Int!, $to: Int!, $baseToken: String!, $skip: Int!, $resolution: String!){
-        priceCandles(first: 1000, where: {
-          timestamp_gte: $from,
-          timestamp_lt: $to
-          baseToken: $baseToken,
-          period: $resolution
-        }
-        skip: $skip) {
-          baseToken
-          open
-          high
-          low
-          close
-          timestamp
-          period
-        }
-      }`,
-        variables: {
-          from: from,
-          to: to,
-          baseToken: baseToken,
-          skip: index * limit,
-          resolution: resolutionToInterval[resolution],
-        },
-      }),
-    })
-    const data = await response.json()
-    const { priceCandles } = data.data
-    if (priceCandles.length === 0) {
-      break
-    }
-
-    priceCandles.forEach((candle: any) => {
-      bars.push({
-        open: String(candle.open / 1e8),
-        high: String(candle.high / 1e8),
-        low: String(candle.low / 1e8),
-        close: String(candle.close / 1e8),
-        time: candle.timestamp * 1000,
-      })
-    })
-  }
-  return bars
-}
-
-async function getBinanceKlines(symbolInfo: LibrarySymbolInfo, resolution: Resolution, from: number, to: number) {
-  var split_symbol = symbolInfo.name.split(/[:/]/)
-  const resolutionToInterval = {
-    1: '1m',
-    5: '5m',
-    15: '15m',
-    60: '1h',
-    240: '4h',
-    '1D': '1d',
-    // ''
-  }
-  // TODO: Limits and getting range when zoom out more
-  const qs = {
-    symbol: split_symbol[0] + split_symbol[1],
-    interval: resolutionToInterval[resolution] ? resolutionToInterval[resolution] : '15m',
-    startTime: (from * 1000).toString(),
-    endTime: (to * 1000).toString(),
-    limit: (1000).toString(), //max is 1000 for binance
-  }
-  let bars = []
-  while (true) {
-    const url = `https://api.binance.us/api/v3/uiKlines?${new URLSearchParams(qs)}`
-    const response = await fetch(url)
-    const data = await response.json()
-    if (data && data.code === 0) {
-      // console.log('Binance API error:',data)
-      return []
-    }
-    if (data.length === 0) {
-      break
-    }
-    bars.push(
-      ...data.map((el: any) => {
-        return {
-          time: el[0],
-          low: el[3],
-          high: el[2],
-          open: el[1],
-          close: el[4],
-          volume: el[5],
-        }
-      })
-    )
-    if (data.length === qs.limit) {
-      // if max entries found then keep
-      const lastTime = bars[bars.length - 1].time
-      qs.startTime = lastTime + 1
-    } else {
-      break
-    }
-  }
-  return bars
-}
-
-async function getCryptoCompareKlines(
-  symbolInfo: LibrarySymbolInfo,
-  resolution: Resolution,
-  from: number,
-  to: number,
-  exchange: string
-) {
-  var split_symbol = symbolInfo.name.split(/[:/]/)
-  const urlPath = resolution === '1D' ? '/data/histoday' : resolution >= 60 ? '/data/histohour' : '/data/histominute'
-  const qs = {
-    e: exchange,
-    fsym: split_symbol[0],
-    tsym: split_symbol[1],
-    toTs: to ? to.toString() : '',
-    // limit: 2000,
-    // aggregate: 1//resolution
-  }
-
-  const url = `https://min-api.cryptocompare.com${urlPath}?${new URLSearchParams(qs)}`
-  const response = await fetch(url)
-  const data = await response.json()
-  if ((data.Response && data.Response === 'Error') || !data.Data.length) {
-    // console.log('CryptoCompare API error:',data.Message)
-    return []
-  }
-  var bars = data.Data.map((el: any) => {
-    return {
-      time: el.time * 1000, //TradingView requires bar time in ms
-      low: el.low,
-      high: el.high,
-      open: el.open,
-      close: el.close,
-      volume: el.volumefrom,
-    }
-  })
-  return bars
-}
-
-function getAllSymbols() {
-  const indexAssets = getTokenList('index', 80001)
-
-  const volmexSymbols = indexAssets.map((index) => {
-    const symbol = index.symbol === 'ETH' ? 'EVIV' : 'BVIV'
-    return {
-      symbol: symbol,
-      full_name: symbol,
-      description: `${index.name} Volatility Index`,
-      exchange: 'Volmex',
-      type: 'crypto',
-    }
-  })
-
-  const volmexSymbolsPerps: any[] = [
-    ...indexAssets.map((index) => ({
-      symbol: index.symbol,
-      full_name: index.symbol + ' Mark Mumbai',
-      description: `${index.name} Volatility Index`,
-      exchange: 'VolmexPerps',
-      type: 'crypto',
-    })),
-    ...indexAssets.map((index) => ({
-      symbol: index.symbol,
-      full_name: index.symbol + ' Mark Arbitrum Goerli',
-      description: `${index.name} Volatility Index`,
-      exchange: 'VolmexPerps',
-      type: 'crypto',
-    })),
-  ]
-
-  const extraSymbols = [
-    {
-      symbol: 'ETH/USD',
-      full_name: 'ETH/USD',
-      description: `Ethereum USD price`,
-      exchange: 'Coinbase',
-      type: 'crypto',
-    },
-    {
-      symbol: 'BTC/USD',
-      full_name: 'BTC/USD',
-      description: `Bitcoin USD price`,
-      exchange: 'Coinbase',
-      type: 'crypto',
-    },
-  ]
-
-  return volmexSymbols.concat(extraSymbols as any).concat(volmexSymbolsPerps)
 }
 
 export default {
@@ -312,8 +26,11 @@ export default {
     const symbols = await getAllSymbols()
     const newSymbols = symbols.filter((symbol) => {
       const isExchangeValid = exchange === '' || symbol.exchange === exchange
+      if (!isExchangeValid) return false
       const isFullSymbolContainsInput = symbol.full_name.toLowerCase().indexOf(userInput.toLowerCase()) !== -1
-      return isExchangeValid && isFullSymbolContainsInput
+      const isDescriptionContainsInput = symbol.description.toLowerCase().indexOf(userInput.toLowerCase()) !== -1
+      const isExchangeContainsInput = symbol.exchange.toLowerCase().indexOf(userInput.toLowerCase()) !== -1
+      return isFullSymbolContainsInput || isDescriptionContainsInput || isExchangeContainsInput
     })
     onResultReadyCallback(newSymbols)
   },
@@ -324,7 +41,8 @@ export default {
     onResolveErrorCallback: (s: any) => void
   ) => {
     const symbols = await getAllSymbols()
-    const symbolItem = symbols.find(({ full_name }) => full_name === symbolName)
+    console.log({ symbols })
+    const symbolItem = symbols.find(({ symbol }) => symbol === symbolName)
     console.log('[resolveSymbol]: Method call', symbolName, symbolItem?.exchange)
     if (!symbolItem) {
       console.log('[resolveSymbol]: Cannot resolve symbol', symbolName)
@@ -347,8 +65,7 @@ export default {
       has_intraday: true,
       has_no_volume: true,
       has_weekly_and_monthly: false,
-      supported_resolutions: configurationData.supported_resolutions,
-      has_empty_bars: true,
+      supported_resolutions: configurationData.supported_resolutions as ResolutionString[],
       volume_precision: 2,
       data_status: 'pulsed',
     }
@@ -364,7 +81,6 @@ export default {
     onHistoryCallback: (s: any, options: any) => void,
     onErrorCallback: (s: any) => void
   ) => {
-    console.log({ resolution })
     const { from: unsafeFrom, to, firstDataRequest } = periodParams
     const from = Math.max(0, unsafeFrom)
     const { exchange } = symbolInfo
@@ -379,7 +95,7 @@ export default {
     )
     console.log('symbol info', symbolInfo)
     if (exchange === 'VolmexPerps') {
-      const bars = await getPerpKlines(symbolInfo, resolution, from, to)
+      const bars = await api.getPerpKlines(symbolInfo, resolution, from, to)
       if (firstDataRequest) {
         lastBarsCache.set(symbolInfo.full_name, {
           ...bars[bars.length - 1],
@@ -402,60 +118,22 @@ export default {
       console.log(`[getBars]: returned ${bars.length} bar(s)`)
     } else if (exchange === 'Volmex') {
       try {
-        const bars = await getVolmexKlines(symbolInfo, resolution, from, to)
-        const lastBarLen = lastBarsCache.get(symbolInfo.full_name)?.barsLen || bars.length
-        const keepBrowsing = lastBarsCache.get(symbolInfo.full_name)?.keepBrowsing
-        const counter = lastBarsCache.get(symbolInfo.full_name)?.counter || 0
-
-        console.log('bars', bars.length)
-        console.log('lastBarLen', lastBarLen)
-
-        // counter++
-
-        if (counter === 1000) {
-          console.log('death loop triggered, calling back with empty array')
-          onHistoryCallback([], { noData: true })
-
+        const bars = await api.getVolmexKlines(symbolInfo, resolution, from, to)
+        if (firstDataRequest) {
           lastBarsCache.set(symbolInfo.full_name, {
-            counter: counter + 1,
-            keepBrowsing: false,
-          })
-        } else if (firstDataRequest && keepBrowsing) {
-          onHistoryCallback(bars, { noData: false })
-
-          lastBarsCache.set(symbolInfo.full_name, {
-            keepBrowsing: true,
-            counter: counter + 1,
-            barsLen: bars.length,
             ...bars[bars.length - 1],
           })
-        } else if (bars.length && keepBrowsing) {
-          onHistoryCallback(bars, { noData: false })
-
-          lastBarsCache.set(symbolInfo.full_name, {
-            keepBrowsing: bars.length >= lastBarLen,
-            barsLen: bars.length,
-            counter: counter + 1,
-            ...bars[bars.length - 1],
-          })
-        } else {
-          lastBarsCache.set(symbolInfo.full_name, {
-            keepBrowsing: false,
-            counter: counter + 1,
-          })
-          onHistoryCallback(bars, { noData: true })
         }
 
+        onHistoryCallback(bars, { noData: bars.length === 0 ? true : false })
         console.log(`[getBars]: returned ${bars.length} bar(s)`)
-
-        return bars
       } catch (error) {
         console.log('[getBars]: Get error', error)
         onErrorCallback(error)
       }
     } else {
       try {
-        const bars = await getBinanceKlines(symbolInfo, resolution, from, to) //await getPerpKlines(symbolInfo, resolution, from, to)
+        const bars = await api.getBinanceKlines(symbolInfo, resolution, from, to) //await getPerpKlines(symbolInfo, resolution, from, to)
         if (firstDataRequest) {
           lastBarsCache.set(symbolInfo.full_name, {
             ...bars[bars.length - 1],
@@ -467,7 +145,7 @@ export default {
       } catch (error) {
         console.log('[getBars]: Get error for binance.us falling back to cryptocompare:', error)
         try {
-          const bars = await getCryptoCompareKlines(symbolInfo, resolution, from, to, exchange)
+          const bars = await api.getCryptoCompareKlines(symbolInfo, resolution, from, to, exchange)
           if (firstDataRequest) {
             lastBarsCache.set(symbolInfo.full_name, {
               ...bars[bars.length - 1],
@@ -500,6 +178,7 @@ export default {
     subscribeUID: string,
     onResetCacheNeededCallback: (s: any) => void
   ) => {
+    if (!(symbolInfo.name === 'EVIV' || symbolInfo.name === 'BVIV')) return
     console.log('[subscribeBars]: Method call with subscribeUID:', subscribeUID)
     subscribeOnStream(
       symbolInfo,
