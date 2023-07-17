@@ -455,6 +455,8 @@ export default {
       }
     } else {
       try {
+        throw 'binance down'
+        console.log('binance')
         const bars = await getBinanceKlines(symbolInfo, resolution, from, to) //await getPerpKlines(symbolInfo, resolution, from, to)
         if (firstDataRequest) {
           lastBarsCache.set(symbolInfo.full_name, {
