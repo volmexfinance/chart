@@ -246,7 +246,7 @@ async function getBinanceKlines(
   }
   // TODO: Limits and getting range when zoom out more
   const qs = {
-    symbol: split_symbol[0] + split_symbol[1],
+    symbol: split_symbol[0] + (split_symbol[1] === 'USD' ? 'USDT' :  split_symbol[1]),
     interval: resolutionToInterval[resolution] ? resolutionToInterval[resolution] : '15m',
     startTime: (from * 1000).toString(),
     endTime: (to * 1000).toString(),
