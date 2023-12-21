@@ -188,5 +188,16 @@ export function getAllSymbols() {
   }
   console.log({ volmexSymbols })
   const extraSymbols = generateExtraSymbols()
-  return volmexSymbols.concat(extraSymbols)
+
+  const generateTVIVSymbol = () => {
+    return {
+      symbol: 'TVIV',
+      full_name: 'TVIV',
+      description: `TVIV`,
+      exchange: 'Volmex',
+      type: 'crypto',
+    }
+  }
+
+  return volmexSymbols.concat(extraSymbols).concat(generateTVIVSymbol())
 }

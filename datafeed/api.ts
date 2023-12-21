@@ -1,23 +1,7 @@
 import { apiBaseUrl } from './constants'
 import type { Bar, Resolution, SymbolInfo } from './types'
 
-async function getVolmexKlines(
-  symbolInfo: SymbolInfo,
-  resolution: Resolution,
-  from: number,
-  to: number
-): Promise<Bar[]> {
-  var split_symbol = symbolInfo.name.split(/[:/]/)
-  const resolutionToInterval = {
-    '1': '1',
-    '5': '5',
-    '15': '15',
-    '60': '60',
-    '240': '60',
-    '1D': 'D',
-    // ''
-  }
-  console.log({ symbolInfo })
+function volmexHelpers() {
   const calculateBack3Days = (to: number) => {
     const back3Days = 3 * 24 * 60 * 60
     return to - back3Days
@@ -30,6 +14,36 @@ async function getVolmexKlines(
     const back1000Days = 1000 * 24 * 60 * 60
     return to - back1000Days
   }
+
+  const resolutionToInterval = {
+    '1': '1',
+    '5': '5',
+    '15': '15',
+    '60': '60',
+    '240': '60',
+    '1D': 'D',
+    // ''
+  }
+
+  return {
+    calculateBack3Days,
+    calculateBack40Days,
+    calculateBack1000Days,
+    resolutionToInterval
+  }
+}
+
+async function getVolmexKlines(
+  symbolInfo: SymbolInfo,
+  resolution: Resolution,
+  from: number,
+  to: number
+): Promise<Bar[]> {
+  const { calculateBack3Days, calculateBack40Days, calculateBack1000Days, resolutionToInterval } = volmexHelpers()
+
+  var split_symbol = symbolInfo.name.split(/[:/]/)
+
+  console.log({ symbolInfo })
   const symbol = split_symbol[0]
 
   const getBaseSymbol = (symbolInfo: SymbolInfo) => {
@@ -228,6 +242,48 @@ async function getPerpKlines(symbolInfo: SymbolInfo, resolution: Resolution, fro
   return bars
 }
 
+
+async function getVolmexTVIVKlines(_: SymbolInfo, resolution: Resolution, from: number, to: number): Promise<Bar[]> {
+  const { calculateBack3Days, calculateBack40Days, calculateBack1000Days, resolutionToInterval } = volmexHelpers()
+  const urlString = `${apiBaseUrl}/public/tviv/history`
+
+  const url = new URL(urlString)
+  url.searchParams.append('resolution', resolutionToInterval[resolution]) // 1, 5, 15, 30, 60
+  url.searchParams.append(
+    'from',
+    String(
+      resolution === '1' || resolution === '5' || resolution === '15'
+        ? calculateBack3Days(to)
+        : resolution === '60'
+        ? calculateBack40Days(to)
+        : resolution === '1D'
+        ? calculateBack1000Days(to)
+        : from
+    )
+  )
+  url.searchParams.append('to', String(to))
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'content-type': 'application/json',
+    },
+  })
+  const data = await response.json()
+
+  const bars = data.t.map((timestamp: any, i: number) => {
+    return {
+      time: timestamp * 1000,
+      low: data.l[i],
+      high: data.h[i],
+      open: data.o[i],
+      close: data.c[i],
+      volume: data.v[i],
+    }
+  })
+
+  return bars
+}
+
 async function getBinanceKlines(
   symbolInfo: SymbolInfo,
   resolution: Resolution,
@@ -382,6 +438,7 @@ const api: {
   getBinanceKlines: middleware(getBinanceKlines),
   getCryptoCompareKlines: getCryptoCompareKlines,
   getPerpKlines: middleware(getPerpKlines),
+  getTVIVKlines: middleware(getVolmexTVIVKlines),
 }
 
 export default api
