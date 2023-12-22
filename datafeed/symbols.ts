@@ -193,7 +193,7 @@ export function getAllSymbols() {
     return {
       symbol: 'TVIV',
       full_name: 'TVIV',
-      description: `TVIV`,
+      description: `Total Implied Volatility Index`,
       exchange: 'Volmex',
       type: 'crypto',
     }
