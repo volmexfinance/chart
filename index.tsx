@@ -38,12 +38,14 @@ export class TVChart extends React.PureComponent<Partial<ChartContainerProps>, C
     fullscreen: false,
     autosize: true,
     studiesOverrides: {},
+    defaultLines: 3, // lines
   }
 
   private tvWidget: IChartingLibraryWidget | null = null
   private ref: React.RefObject<HTMLDivElement> = React.createRef()
 
   public initWidget(): void {
+    console.log('initWidget', this.props.symbol, this.props.interval)
     if (!this.ref.current) {
       return
     }
@@ -63,7 +65,7 @@ export class TVChart extends React.PureComponent<Partial<ChartContainerProps>, C
 
       locale: navigator.language.slice(0, 2) as LanguageCode,
       disabled_features: [
-        // 'use_localstorage_for_settings',
+        'use_localstorage_for_settings', // this affects the css of the chart
         // 'header_saveload',
         // 'header_settings',
         // 'study_templates',
@@ -90,7 +92,7 @@ export class TVChart extends React.PureComponent<Partial<ChartContainerProps>, C
       studies_overrides: this.props.studiesOverrides,
       overrides: {
         // "mainSeriesProperties.showCountdown": true,
-        'paneProperties.background': this.props.darkMode ? 'rgba(17, 24, 39, 1)' : 'rgb(249, 250, 251)',
+        'paneProperties.background': this.props.darkMode ? 'rgba(13, 12, 19, 1)' : 'rgb(249, 250, 251)',
         // 'scalesProperties.background': this.props.darkMode ? 'rgba(17, 24, 39, 1)' : 'rgba(249, 250, 251, 1)',
 
         // "paneProperties.vertGridProperties.color": "#363c4e",
@@ -140,14 +142,17 @@ export class TVChart extends React.PureComponent<Partial<ChartContainerProps>, C
         },
       ],
     }
-
+    console.log({darkMode123: this.props.darkMode})
     const tvWidget = new widget(widgetOptions)
-
+    console.log({ tvWidget })
     // set chart type to area
-
+    
+    if (this.props.darkMode) {
+      tvWidget.applyOverrides({ 'paneProperties.background': 'rgba(13, 12, 19, 1)', 'paneProperties.backgroundType' : 'solid' })
+    }
     tvWidget.onChartReady(() => {
       tvWidget.headerReady().then(() => {
-        tvWidget.chart().setChartType(3)
+        tvWidget.chart().setChartType(this.props.defaultLines ?? 3)
         if (this.props.compareSymbols !== undefined) {
           for (const symbol of this.props.compareSymbols) {
             tvWidget.chart().createStudy('Compare', true, false, ['open', symbol])
@@ -175,16 +180,18 @@ export class TVChart extends React.PureComponent<Partial<ChartContainerProps>, C
   }
 
   public componentDidMount(): void {
+    console.log('darkMode123 mount', this.props.darkMode)
     this.initWidget()
   }
-
+  
   public componentWillUnmount(): void {
+    console.log('darkMode123 unmount', this.props.darkMode)
     if (this.tvWidget !== null) {
       this.tvWidget.remove()
       this.tvWidget = null
     }
   }
-
+  
   componentDidUpdate = () => {
     if (this.tvWidget !== null) {
       this.tvWidget.onChartReady(() => {

@@ -1,5 +1,8 @@
+import { ChainId } from './chainIds'
 import { apiBaseUrl } from './constants'
+import { getChainIdRelayer } from './helpers'
 import type { Bar, Resolution, SymbolInfo } from './types'
+import { VOLMEX_API_CONSTANTS } from './volmexApiHelpers'
 
 async function getVolmexKlines(
   symbolInfo: SymbolInfo,
@@ -8,28 +11,7 @@ async function getVolmexKlines(
   to: number
 ): Promise<Bar[]> {
   var split_symbol = symbolInfo.name.split(/[:/]/)
-  const resolutionToInterval = {
-    '1': '1',
-    '5': '5',
-    '15': '15',
-    '60': '60',
-    '240': '60',
-    '1D': 'D',
-    // ''
-  }
-  console.log({ symbolInfo })
-  const calculateBack3Days = (to: number) => {
-    const back3Days = 3 * 24 * 60 * 60
-    return to - back3Days
-  }
-  const calculateBack40Days = (to: number) => {
-    const back40Days = 40 * 24 * 60 * 60
-    return to - back40Days
-  }
-  const calculateBack1000Days = (to: number) => {
-    const back1000Days = 1000 * 24 * 60 * 60
-    return to - back1000Days
-  }
+  const { resolutionToInterval, calculateBack3Days, calculateBack40Days, calculateBack1000Days } = VOLMEX_API_CONSTANTS
   const symbol = split_symbol[0]
 
   const getBaseSymbol = (symbolInfo: SymbolInfo) => {
@@ -158,73 +140,73 @@ async function getVolmexKlines(
 }
 
 async function getPerpKlines(symbolInfo: SymbolInfo, resolution: Resolution, from: number, to: number): Promise<Bar[]> {
-  var split_symbol = symbolInfo.name.split(/[:/]/)
-  const symbolToBaseToken: { [index: string]: string } = {
-    ETH: '0x24bf203aaf9afb0d4fc03001a368ceab11b92d93',
-    // BTC: '0x24bf203aaf9afb0d4fc03001a368ceab11b92d93', // TODO: remove with BTC base token address
+  // @ts-ignore
+  const { ticker } = symbolInfo
+  if (!ticker) {
+    throw 'no ticker'
   }
-  const baseToken = symbolToBaseToken[split_symbol[0]] ?? '0x24bf203aaf9afb0d4fc03001a368ceab11b92d93'
-  const bars: any[] = []
-  const resolutionToInterval = {
-    '1': '1m',
-    '5': '5m',
-    '15': '15m',
-    '60': '1h',
-    '240': '4h',
-    '1D': '1d',
-    // ''
+  const [symbol, _, _chainId, priceType] = ticker.split(':') as [string, string, string, 'LAST_PRICE' | 'MARK_PRICE']
+  const getUrlString = (token: string) => {
+    const chainIdRelayer = getChainIdRelayer(chainId)
+    const baseUrl = process.env.REACT_APP_PERPS_API_URL
+    return `${baseUrl}/api/v1/perpetuals/${
+      priceType == 'LAST_PRICE' ? 'last' : 'mark'
+    }_prices_history/${chainIdRelayer}/${token}`
   }
-  let limit = 1000
-  let index = 0
-  while (bars.length % limit === 0) {
-    const response = await fetch('https://api.thegraph.com/subgraphs/name/jonathanvolmex/perps-mumbai', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        query: `query PriceCandles($from: Int!, $to: Int!, $baseToken: String!, $skip: Int!, $resolution: String!){
-          priceCandles(first: 1000, where: {
-            timestamp_gte: $from,
-            timestamp_lt: $to
-            baseToken: $baseToken,
-            period: $resolution
-          }
-          skip: $skip) {
-            baseToken
-            open
-            high
-            low
-            close
-            timestamp
-            period
-          }
-        }`,
-        variables: {
-          from: from,
-          to: to,
-          baseToken: baseToken,
-          skip: index * limit,
-          resolution: resolutionToInterval[resolution],
-        },
-      }),
-    })
-    const data = await response.json()
-    const { priceCandles } = data.data
-    if (priceCandles.length === 0) {
-      break
-    }
+  const chainId = Number(_chainId)
+  const tokenAddr = {
+    [ChainId.ArbitrumSepolia]: {
+      EVIV: process.env.REACT_APP_ARBITRUM_EVIV!,
+      BVIV: process.env.REACT_APP_ARBITRUM_BVIV!, // TODO: remove with BTC base token address
+      ETH: process.env.REACT_APP_ARBITRUM_ETHUSD!,
+      BTC: process.env.REACT_APP_ARBITRUM_BTCUSD!,
+    },
+    [ChainId.BaseGoerli]: {
+      EVIV: process.env.REACT_APP_BASE_EVIV!,
+      BVIV: process.env.REACT_APP_BASE_BVIV!, // TODO: remove with BTC base token address
+      ETH: process.env.REACT_APP_BASE_ETHUSD!,
+      BTC: process.env.REACT_APP_BASE_BTCUSD!,
+    },
+  }[chainId as ChainId.ArbitrumSepolia | ChainId.BaseGoerli][symbol as 'EVIV' | 'BVIV' | 'ETH' | 'BTC']
 
-    priceCandles.forEach((candle: any) => {
-      bars.push({
-        open: String(candle.open / 1e8),
-        high: String(candle.high / 1e8),
-        low: String(candle.low / 1e8),
-        close: String(candle.close / 1e8),
-        time: candle.timestamp * 1000,
-      })
-    })
-  }
+  const { resolutionToInterval, calculateBack3Days, calculateBack40Days, calculateBack1000Days } = VOLMEX_API_CONSTANTS
+
+  const urlString = getUrlString(tokenAddr)
+  const url = new URL(urlString)
+  url.searchParams.append('resolution', resolutionToInterval[resolution]) // 1, 5, 15, 30, 60
+  url.searchParams.append(
+    'from',
+    String(
+      resolution === '1' || resolution === '5' || resolution === '15'
+        ? calculateBack3Days(to)
+        : resolution === '60'
+        ? calculateBack40Days(to)
+        : resolution === '1D'
+        ? calculateBack1000Days(to)
+        : from
+    )
+  )
+  url.searchParams.append('to', String(to))
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'content-type': 'application/json',
+    },
+  })
+  const data = await response.json()
+
+  const bars = data.t.map((timestamp: any, i: number) => {
+    return {
+      time: timestamp * 1000,
+      low: data.l[i],
+      high: data.h[i],
+      open: data.o[i],
+      close: data.c[i],
+      volume: 0, //data.v[i],
+    }
+  })
+
   return bars
 }
 
@@ -246,7 +228,7 @@ async function getBinanceKlines(
   }
   // TODO: Limits and getting range when zoom out more
   const qs = {
-    symbol: split_symbol[0] + (split_symbol[1] === 'USD' ? 'USDT' :  split_symbol[1]),
+    symbol: split_symbol[0] + (split_symbol[1] === 'USD' ? 'USDT' : split_symbol[1]),
     interval: resolutionToInterval[resolution] ? resolutionToInterval[resolution] : '15m',
     startTime: (from * 1000).toString(),
     endTime: (to * 1000).toString(),

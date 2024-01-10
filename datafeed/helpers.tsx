@@ -1,3 +1,4 @@
+import { ChainId } from './chainIds'
 import type { Resolution } from './types'
 
 // Make requests to CryptoCompare API
@@ -47,4 +48,24 @@ export function getNextBarTime(resolution: Resolution) {
   const now = new Date()
   const nextBarTime = new Date(now.getTime() + timeBucket * 1000)
   return nextBarTime.getTime()
+}
+
+
+export const getChainIdRelayer = (chainId: ChainId) => {
+  switch (chainId) {
+    case ChainId.Mumbai:
+      throw 'Mumbai not supported'
+      return 'POS'
+    case ChainId.ArbitrumGoerli:
+      return 'ARB'
+    case ChainId.ArbitrumSepolia:
+      return 'ARB'
+    case ChainId.BaseGoerli:
+      return 'BSG'
+    case ChainId.ZkSyncTestnet:
+      return 'ZKSYNC'
+    default:
+      console.error('getChainIdRelayer: Unsupported chainId:', chainId)
+      return 'ARB'
+  }
 }

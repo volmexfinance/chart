@@ -175,8 +175,8 @@ export function getAllSymbols() {
     return acc
   }, [])
 
-  const generateExtraSymbols = () => {
-    return indexAssets.map((i) => {
+  const generateIndexPriceSymbols = () => {
+    return indexAssets.filter(i => i.symbol == 'ETH' || i.symbol == 'BTC').map((i) => {
       return {
         symbol: i.symbol + '/USD',
         full_name: i.symbol + '/USD',
@@ -186,7 +186,33 @@ export function getAllSymbols() {
       }
     })
   }
-  console.log({ volmexSymbols })
-  const extraSymbols = generateExtraSymbols()
-  return volmexSymbols.concat(extraSymbols)
+  
+    // assuming if REACT_APP_ENABLED_CHAIN_IDS is set, then we want to show perps symbols
+    const volmexSymbolsPerps: any[] = []
+    if (process.env.REACT_APP_ENABLED_CHAIN_IDS != undefined) {
+      volmexSymbolsPerps.push(
+        ...[{ symbol: 'EVIV:PERP' }, { symbol: 'BVIV:PERP' }, { symbol: 'ETH:PERP' }, { symbol: 'BTC:PERP' }].flatMap(
+          (index) =>
+            (process.env.REACT_APP_ENABLED_CHAIN_IDS as string).split(',').flatMap((chainId) => [
+              {
+                symbol: index.symbol + ':' + chainId + ':LAST_PRICE',
+                full_name: index.symbol + ':' + chainId + ':LAST_PRICE',
+                description: `${index.symbol} Perpetuals ${chainId} Last Price`,
+                exchange: 'VolmexPerps',
+                type: 'crypto',
+              },
+              {
+                symbol: index.symbol + ':' + chainId + ':MARK_PRICE',
+                full_name: index.symbol + ':' + chainId + ':MARK_PRICE',
+                description: `${index.symbol} Perpetuals ${chainId} Mark Price`,
+                exchange: 'VolmexPerps',
+                type: 'crypto',
+              },
+            ])
+        )
+      )
+    }
+  
+  const extraSymbols = generateIndexPriceSymbols()
+  return volmexSymbols.concat(extraSymbols).concat(volmexSymbolsPerps)
 }

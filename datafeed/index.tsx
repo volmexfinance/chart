@@ -51,7 +51,7 @@ export default {
     }
 
     console.log('symbolName', symbolName)
-
+    // @ts-ignore
     const symbolInfo: LibrarySymbolInfo = {
       ticker: symbolName,
       name: symbolItem.symbol,
@@ -75,7 +75,7 @@ export default {
   },
 
   getBars: async (
-    symbolInfo: SymbolInfo,
+    symbolInfo: LibrarySymbolInfo,
     resolution: Resolution,
     periodParams: any,
     onHistoryCallback: (s: any, options: any) => void,
@@ -84,7 +84,15 @@ export default {
     const { from: unsafeFrom, to, firstDataRequest } = periodParams
     const from = Math.max(0, unsafeFrom)
     const { exchange } = symbolInfo
-    console.log('[getBars]: Method call', symbolInfo, resolution, from, to)
+    console.log(
+      '[getBars]: Method call',
+      symbolInfo,
+      resolution,
+      from,
+      to,
+      new Date(from * 1000).toLocaleDateString(),
+      new Date(to * 1000).toLocaleDateString()
+    )
     console.log('symbol info', symbolInfo)
     if (exchange === 'VolmexPerps') {
       const bars = await api.getPerpKlines(symbolInfo, resolution, from, to)
@@ -93,9 +101,20 @@ export default {
           ...bars[bars.length - 1],
         })
       }
-      const counter = lastBarsCache.get(symbolInfo.full_name + '_' + resolution)?.counter || 0
-
-      onHistoryCallback(bars, { noData: counter > 5 && bars.length > 0 ? false : true })
+      const id = symbolInfo.full_name + '_' + resolution
+      let lastBar = lastBarsCache.get(id)
+      if (!lastBar) {
+        lastBar = {
+          counter: 0,
+        }
+        lastBarsCache.set(id, lastBar)
+      } else {
+        lastBarsCache.set(id, {
+          counter: lastBar.counter + 1,
+        })
+      }
+      console.log({ counter: lastBar.counter })
+      onHistoryCallback(bars, { noData: bars.length == 0 && lastBar.counter > 5 })
       console.log(`[getBars]: returned ${bars.length} bar(s)`)
     } else if (exchange === 'Volmex') {
       try {
@@ -128,7 +147,7 @@ export default {
       } catch (error) {
         console.log('[getBars]: Get error for binance.us falling back to cryptocompare:', error)
         try {
-          const bars = await api.getCryptoCompareKlines(symbolInfo, resolution, from, to, exchange)
+          const bars = await api.getCryptoCompareKlines(symbolInfo, resolution, from, to)
           if (firstDataRequest) {
             lastBarsCache.set(symbolInfo.full_name, {
               ...bars[bars.length - 1],
@@ -155,7 +174,7 @@ export default {
   },
 
   subscribeBars: (
-    symbolInfo: SymbolInfo,
+    symbolInfo: LibrarySymbolInfo,
     resolution: Resolution,
     onRealtimeCallback: (s: any) => void,
     subscribeUID: string,
