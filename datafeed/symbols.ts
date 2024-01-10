@@ -175,8 +175,9 @@ export function getAllSymbols() {
     return acc
   }, [])
 
-  const generateExtraSymbols = () => {
-    return indexAssets.map((i) => {
+  const generateIndexPriceSymbols = () => {
+    // Only show ETH and BTC index price
+    return indexAssets.filter(i => i.symbol == 'ETH' || i.symbol == 'BTC').map((i) => {
       return {
         symbol: i.symbol + '/USD',
         full_name: i.symbol + '/USD',
@@ -187,6 +188,6 @@ export function getAllSymbols() {
     })
   }
   console.log({ volmexSymbols })
-  const extraSymbols = generateExtraSymbols()
+  const extraSymbols = generateIndexPriceSymbols()
   return volmexSymbols.concat(extraSymbols)
 }
