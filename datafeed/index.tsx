@@ -75,25 +75,55 @@ async function getPerpKlines(symbolInfo: LibrarySymbolInfo, resolution: Resoluti
       symbolToBaseToken: { [index: string]: string }
     }
   } = {
-    'ETH Mark Mumbai': {
-      url: 'https://api.thegraph.com/subgraphs/name/jonathanvolmex/perps-mumbai',
+    'Arbitrum Sepolia Staging': {
+      url: 'https://api.thegraph.com/subgraphs/name/jonathanvolmex/perps-arbitrum-staging',
       symbolToBaseToken: {
-        ETH: '0xBE1bB5F011af3e5fB67Bd17b539989b34DC1D50a',
-        // BTC: '0x24bf203aaf9afb0d4fc03001a368ceab11b92d93', // TODO: remove with BTC base token address
+        EVIV: '0x3e16c66bdD8b6f93807275434893d2DA1BD35437',
+        BVIV: '0x596a79a441Ad4cc3eC56a59c251298B6aEb5F444', // TODO: remove with BTC base token address
+        ETH: '0x183D38e9C7bE4a71cf85F38562b81542a0259C4D',
+        BTC: '0xC533f7D0A98E29566d58A3aFF9Fc3ab094DFd9fA',
       },
     },
-    'ETH Mark Arbitrum Goerli': {
-      url: 'https://api.thegraph.com/subgraphs/name/jonathanvolmex/perps-arbgoerli',
+    'Base Goerli Staging': {
+      url: 'https://api.studio.thegraph.com/query/51896/perps-base-staging/version/latest',
       symbolToBaseToken: {
-        ETH: '0x3C5987D4d2d263167e1103B9A6C7ec5Ee11E3126',
+        EVIV: '0x290e1217D0a766d8045cC89F2f474B5C056bCbec',
+        BVIV: '0x589ECc36b74A82d86D6Fd02ce92EAcC7290f0f52', // TODO: remove with BTC base token address
+        ETH: '0x5AC05f40b33348A94de36dA1b18358C4E9CD2E26',
+        BTC: '0xAAA60b5a68962971786912e34811ACe216e5af77',
+      },
+    },
+    'Arbitrum Sepolia Testnet': {
+      url: 'https://api.thegraph.com/subgraphs/name/jonathanvolmex/perps-arbitrum-testnet-2',
+      symbolToBaseToken: {
+        EVIV: '0x4c88C3FBc04717bf191F327B906554219C9F5086',
+        BVIV: '0x0E985966b546EC86304Be0780ECfD2fe2bBf849c', // TODO: remove with BTC base token address
+        ETH: '0xBfcf08E51Fa2E23C371a1bE213B39D07C5192014',
+        BTC: '0xD81F9c7230354d395dCdc9e3403948263fD46a58',
+      },
+    },
+    'Base Goerli Testnet': {
+      url: 'https://api.studio.thegraph.com/query/51896/perps-base-testnet-2/version/latest',
+      symbolToBaseToken: {
+        EVIV: '0xd4eF7A69971D660660ff792d97663aEF9aAf210e',
+        BVIV: '0x58f046e01D7064a50067c876a52E4622fe859643', // TODO: remove with BTC base token address
+        ETH: '0xEC2B99D116b6d0baD017d607Dc285342353D6D5c',
+        BTC: '0xCbBb1f0B796c7FA2DafB8E1C2E394Aa7082fB2B7',
       },
     },
   }
-  const config = tickerToConfig[ticker ?? 'ETH Mark Mumbai']
+  let config
+  for (const key in tickerToConfig) {
+    if (symbolInfo.name.includes(key)) {
+      config = tickerToConfig[key]
+      break
+    }
+    throw 'no config found'
+  }
 
   var split_symbol = symbolInfo.name.split(/[:/]/)
-  console.log({ symbolInfo })
-  const baseToken = config.symbolToBaseToken[split_symbol[0]]
+  console.log({ symbolInfo, split_symbol, ticker })
+  const baseToken = config!.symbolToBaseToken[split_symbol[0]]
   const bars: any[] = []
   const resolutionToInterval = {
     1: '1m',
@@ -107,7 +137,7 @@ async function getPerpKlines(symbolInfo: LibrarySymbolInfo, resolution: Resoluti
   let limit = 1000
   let index = 0
   while (bars.length % limit === 0) {
-    const response = await fetch(config.url, {
+    const response = await fetch(config!.url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -264,23 +294,33 @@ function getAllSymbols() {
     }
   })
 
-  const volmexSymbolsPerps: any[] = [
-    ...indexAssets.map((index) => ({
-      symbol: index.symbol,
-      full_name: index.symbol + ' Mark Mumbai',
-      description: `${index.name} Volatility Index`,
-      exchange: 'VolmexPerps',
-      type: 'crypto',
-    })),
-    ...indexAssets.map((index) => ({
-      symbol: index.symbol,
-      full_name: index.symbol + ' Mark Arbitrum Goerli',
-      description: `${index.name} Volatility Index`,
-      exchange: 'VolmexPerps',
-      type: 'crypto',
-    })),
-  ]
+  // assuming if REACT_APP_ENABLED_CHAIN_IDS is set, then we want to show perps symbols
+  const volmexSymbolsPerps: any[] = []
+  if (process.env.REACT_APP_ENABLED_CHAIN_IDS != undefined) {
+    volmexSymbolsPerps.push(
+      ...[{ symbol: 'EVIV:PERP' }, { symbol: 'BVIV:PERP' }, { symbol: 'ETH:PERP' }, { symbol: 'BTC:PERP' }].flatMap(
+        (index) =>
+          (process.env.REACT_APP_ENABLED_CHAIN_IDS as string).split(',').flatMap((chainId) => [
+            {
+              symbol: index.symbol,
+              full_name: index.symbol + ':' + chainId + ':LAST_PRICE',
+              description: `${index.symbol} Perpetuals ${chainId} Last Price`,
+              exchange: 'VolmexPerps',
+              type: 'crypto',
+            },
+            {
+              symbol: index.symbol,
+              full_name: index.symbol + ':' + chainId + ':MARK_PRICE',
+              description: `${index.symbol} Perpetuals ${chainId} Mark Price`,
+              exchange: 'VolmexPerps',
+              type: 'crypto',
+            },
+          ])
+      )
+    )
+  }
 
+  console.log('volmexSymbolsPerps', volmexSymbolsPerps)
   const extraSymbols = [
     {
       symbol: 'ETH/USD',
@@ -347,6 +387,7 @@ export default {
       has_intraday: true,
       has_no_volume: true,
       has_weekly_and_monthly: false,
+      // @ts-ignore
       supported_resolutions: configurationData.supported_resolutions,
       has_empty_bars: true,
       volume_precision: 2,
