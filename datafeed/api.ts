@@ -246,7 +246,7 @@ async function getBinanceKlines(
   }
   // TODO: Limits and getting range when zoom out more
   const qs = {
-    symbol: split_symbol[0] + (split_symbol[1] === 'USD' ? 'USDT' :  split_symbol[1]),
+    symbol: split_symbol[0] + (split_symbol[1] === 'USD' ? 'USDT' : split_symbol[1]),
     interval: resolutionToInterval[resolution] ? resolutionToInterval[resolution] : '15m',
     startTime: (from * 1000).toString(),
     endTime: (to * 1000).toString(),
@@ -330,14 +330,14 @@ type FetchKlines = (symbolInfo: SymbolInfo, resolution: Resolution, from: number
 
 function middleware(fetchKlines: FetchKlines): FetchKlines {
   return async (symbolInfo: SymbolInfo, resolution: Resolution, from: number, to: number): Promise<Bar[]> => {
-    let oldestBarTimestamp = to
+    let fromTemp = from
     let bars: Array<Bar> = []
     // assumes that each fetch returns the bars closer on the `to` over the `from` range
     let deathspiral = 0
     let lastWasOnlyOne = false
     while (true) {
       console.log('fetch loop')
-      const _bars = await fetchKlines(symbolInfo, resolution, from, oldestBarTimestamp)
+      const _bars = await fetchKlines(symbolInfo, resolution, fromTemp, to)
       if (_bars.length === 0 || lastWasOnlyOne) {
         break
       }
@@ -353,12 +353,9 @@ function middleware(fetchKlines: FetchKlines): FetchKlines {
         break
       }
       bars = _bars.concat(bars)
-      oldestBarTimestamp = Math.floor(_bars[0].time / 1000)
-      console.log({
-        oldestBarTimestamp,
-        from,
-        _bars,
-      })
+      // assumes the newest bar is the last in the array
+      fromTemp = Math.floor(_bars[_bars.length - 1].time / 1000)
+      console.log(symbolInfo.full_name, fromTemp, to, _bars)
       const resolutionToInterval = {
         '1': 60,
         '5': 300,
@@ -367,7 +364,7 @@ function middleware(fetchKlines: FetchKlines): FetchKlines {
         '240': 14400,
         '1D': 86400,
       }
-      if (oldestBarTimestamp - resolutionToInterval[resolution] <= from) {
+      if (fromTemp + resolutionToInterval[resolution] >= to || _bars.length < 10) {
         break
       }
     }
