@@ -329,10 +329,18 @@ async function getCryptoCompareKlines(
 type FetchKlines = (symbolInfo: SymbolInfo, resolution: Resolution, from: number, to: number) => Promise<Bar[]>
 
 function middleware(fetchKlines: FetchKlines): FetchKlines {
+  const resolutionToInterval = {
+    '1': 60,
+    '5': 300,
+    '15': 900,
+    '60': 3600,
+    '240': 14400,
+    '1D': 86400,
+  }
   return async (symbolInfo: SymbolInfo, resolution: Resolution, from: number, to: number): Promise<Bar[]> => {
-    let fromTemp = from
+    let fromTemp = from - resolutionToInterval[resolution] * 200 // give 200 extra bars
     let bars: Array<Bar> = []
-    // assumes that each fetch returns the bars closer on the `to` over the `from` range
+    // assumes that each fetch returns the bars closer on the `from` over the `to` range
     let deathspiral = 0
     let lastWasOnlyOne = false
     while (true) {
@@ -356,14 +364,7 @@ function middleware(fetchKlines: FetchKlines): FetchKlines {
       // assumes the newest bar is the last in the array
       fromTemp = Math.floor(_bars[_bars.length - 1].time / 1000)
       console.log(symbolInfo.full_name, fromTemp, to, _bars)
-      const resolutionToInterval = {
-        '1': 60,
-        '5': 300,
-        '15': 900,
-        '60': 3600,
-        '240': 14400,
-        '1D': 86400,
-      }
+
       if (fromTemp + resolutionToInterval[resolution] >= to || _bars.length < 10) {
         break
       }
