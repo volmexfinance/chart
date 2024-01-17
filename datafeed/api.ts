@@ -228,65 +228,6 @@ async function getPerpKlines(symbolInfo: SymbolInfo, resolution: Resolution, fro
   return bars
 }
 
-async function getBinanceKlines(
-  symbolInfo: SymbolInfo,
-  resolution: Resolution,
-  from: number,
-  to: number
-): Promise<Bar[]> {
-  var split_symbol = symbolInfo.name.split(/[:/]/)
-  const resolutionToInterval = {
-    '1': '1m',
-    '5': '5m',
-    '15': '15m',
-    '60': '1h',
-    '240': '4h',
-    '1D': '1d',
-    // ''
-  }
-  // TODO: Limits and getting range when zoom out more
-  const qs = {
-    symbol: split_symbol[0] + (split_symbol[1] === 'USD' ? 'USDT' : split_symbol[1]),
-    interval: resolutionToInterval[resolution] ? resolutionToInterval[resolution] : '15m',
-    startTime: (from * 1000).toString(),
-    endTime: (to * 1000).toString(),
-    limit: (1000).toString(), //max is 1000 for binance
-  }
-  let bars = []
-  while (true) {
-    const url = `https://api.binance.us/api/v3/uiKlines?${new URLSearchParams(qs)}`
-    const response = await fetch(url)
-    const data = await response.json()
-    if (data && data.code === 0) {
-      // console.log('Binance API error:',data)
-      return []
-    }
-    if (data.length === 0) {
-      break
-    }
-    bars.push(
-      ...data.map((el: any) => {
-        return {
-          time: el[0],
-          low: el[3],
-          high: el[2],
-          open: el[1],
-          close: el[4],
-          volume: el[5],
-        }
-      })
-    )
-    if (data.length === qs.limit) {
-      // if max entries found then keep
-      const lastTime = bars[bars.length - 1].time
-      qs.startTime = lastTime + 1
-    } else {
-      break
-    }
-  }
-  return bars
-}
-
 async function getCryptoCompareKlines(
   symbolInfo: SymbolInfo,
   resolution: Resolution,
@@ -295,34 +236,52 @@ async function getCryptoCompareKlines(
 ): Promise<Bar[]> {
   var split_symbol = symbolInfo.name.split(/[:/]/)
   const { exchange } = symbolInfo
+  let bars: Bar[] = []
 
-  const urlPath = resolution === '1D' ? '/data/histoday' : resolution == '60' ? '/data/histohour' : '/data/histominute'
-  const qs = {
-    e: exchange,
-    fsym: split_symbol[0],
-    tsym: split_symbol[1],
-    toTs: to ? to.toString() : '',
-    // limit: 2000,
-    // aggregate: 1//resolution
-  }
+  const urlPath =
+    resolution === '1D' ? '/data/v2/histoday' : resolution == '60' ? '/data/v2/histohour' : '/data/v2/histominute'
 
-  const url = `https://min-api.cryptocompare.com${urlPath}?${new URLSearchParams(qs)}`
-  const response = await fetch(url)
-  const data = await response.json()
-  if ((data.Response && data.Response === 'Error') || !data.Data.length) {
-    // console.log('CryptoCompare API error:',data.Message)
-    return []
-  }
-  var bars = data.Data.map((el: any) => {
-    return {
-      time: el.time * 1000, //TradingView requires bar time in ms
-      low: el.low,
-      high: el.high,
-      open: el.open,
-      close: el.close,
-      volume: el.volumefrom,
+  while (true) {
+    const qs = {
+      e: exchange,
+      fsym: split_symbol[0],
+      tsym: split_symbol[1],
+      toTs: to ? to.toString() : '',
+      limit: 2000,
     }
-  })
+
+    const url =
+      `https://min-api.cryptocompare.com${urlPath}?${new URLSearchParams(qs)}` +
+      `&api_key=21a0180901d0804c155a2c86a22a26a32f4ee5fdac05b7a029bf337048139cb0`
+    const response = await fetch(url)
+    const data = await response.json()
+
+    if ((data.Response && data.Response === 'Error') || !data.Data.Data.length) {
+      // console.log('CryptoCompare API error:',data.Message)
+      break
+    }
+    var newBars = data.Data.Data.map((el: any) => {
+      return {
+        time: el.time * 1000, //TradingView requires bar time in ms
+        low: el.low,
+        high: el.high,
+        open: el.open,
+        close: el.close,
+        volume: el.volumefrom,
+      }
+    })
+
+    bars = [...newBars, ...bars]
+
+    // If the earliest bar's time is less than 'from', break the loop
+    if (newBars[0].time <= from) {
+      break
+    }
+
+    // Set 'to' to the time of the earliest bar for the next request
+    to = newBars[0].time / 1000
+  }
+
   return bars
 }
 
@@ -338,37 +297,39 @@ function middleware(fetchKlines: FetchKlines): FetchKlines {
     '1D': 86400,
   }
   return async (symbolInfo: SymbolInfo, resolution: Resolution, from: number, to: number): Promise<Bar[]> => {
-    let fromTemp = from - resolutionToInterval[resolution] * 200 // give 200 extra bars
-    let bars: Array<Bar> = []
+    // let fromTemp = from + resolutionToInterval[resolution] * 10000 // give 200 extra bars
+    // let bars: Array<Bar> = []
     // assumes that each fetch returns the bars closer on the `from` over the `to` range
     let deathspiral = 0
     let lastWasOnlyOne = false
-    while (true) {
-      console.log('fetch loop')
-      const _bars = await fetchKlines(symbolInfo, resolution, fromTemp, to)
-      if (_bars.length === 0 || lastWasOnlyOne) {
-        break
-      }
+    const bars = await fetchKlines(symbolInfo, resolution, from, to)
 
-      // fixes edge case where the last bar timestamp is greater than the (from timestamp + resolution)
-      //which can occur when there is not enough data to show bars for the complete range
-      if (_bars.length === 1) {
-        lastWasOnlyOne = true
-      }
-      deathspiral++
-      if (deathspiral > 100) {
-        console.error('deathspiral activated')
-        break
-      }
-      bars = _bars.concat(bars)
-      // assumes the newest bar is the last in the array
-      fromTemp = Math.floor(_bars[_bars.length - 1].time / 1000)
-      console.log(symbolInfo.full_name, fromTemp, to, _bars)
+    // while (true) {
+    //   console.log('fetch loop')
+    //   const _bars = await fetchKlines(symbolInfo, resolution, fromTemp, to)
+    //   if (_bars.length === 0 || lastWasOnlyOne) {
+    //     break
+    //   }
 
-      if (fromTemp + resolutionToInterval[resolution] >= to || _bars.length < 10) {
-        break
-      }
-    }
+    //   // fixes edge case where the last bar timestamp is greater than the (from timestamp + resolution)
+    //   //which can occur when there is not enough data to show bars for the complete range
+    //   if (_bars.length === 1) {
+    //     lastWasOnlyOne = true
+    //   }
+    //   deathspiral++
+    //   if (deathspiral > 100) {
+    //     console.error('deathspiral activated')
+    //     break
+    //   }
+    //   bars = _bars.concat(bars)
+    //   // assumes the newest bar is the last in the array
+    //   fromTemp = Math.floor(_bars[_bars.length - 1].time / 1000)
+    //   console.log(symbolInfo.full_name, fromTemp, to, _bars)
+
+    //   if (fromTemp + resolutionToInterval[resolution] >= to || _bars.length < 10) {
+    //     break
+    //   }
+    // }
     return bars
   }
 }
@@ -377,7 +338,6 @@ const api: {
   [fnName: string]: FetchKlines
 } = {
   getVolmexKlines: middleware(getVolmexKlines),
-  getBinanceKlines: middleware(getBinanceKlines),
   getCryptoCompareKlines: getCryptoCompareKlines,
   getPerpKlines: middleware(getPerpKlines),
 }

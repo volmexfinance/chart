@@ -15,6 +15,8 @@ const configurationData = {
   reset_cache_timeout: 100,
 }
 
+let firstDataRequestCache = new Map()
+
 export default {
   onReady: (callback: (s: any) => void) => {
     console.log('[onReady]: Method call')
@@ -82,6 +84,7 @@ export default {
     onErrorCallback: (s: any) => void
   ) => {
     const { from: unsafeFrom, to, firstDataRequest } = periodParams
+
     const from = Math.max(0, unsafeFrom)
     const { exchange } = symbolInfo
     console.log('[getBars]: Method call', symbolInfo, resolution, from, to)
@@ -94,7 +97,6 @@ export default {
         })
       }
       const counter = lastBarsCache.get(symbolInfo.full_name + '_' + resolution)?.counter || 0
-
       onHistoryCallback(bars, { noData: counter > 5 && bars.length > 0 ? false : true })
       console.log(`[getBars]: returned ${bars.length} bar(s)`)
     } else if (exchange === 'Volmex') {
@@ -113,42 +115,39 @@ export default {
         onErrorCallback(error)
       }
     } else {
+      // try {
+      //   const bars = await api.getBinanceKlines(symbolInfo, resolution, from, to) //await getPerpKlines(symbolInfo, resolution, from, to)
+      //   if (firstDataRequest) {
+      //     lastBarsCache.set(symbolInfo.full_name, {
+      //       ...bars[bars.length - 1],
+      //     })
+      //   }
+      //   if (firstDataRequest && bars.length === 0) {
+      //     throw 'no data'
+      //   }
+      //   onHistoryCallback(bars, { noData: bars.length === 0 ? true : false })
+      //   console.log(`[getBars]: returned ${bars.length} bar(s)`)
+      // } catch (error) {
+      //   console.log('[getBars]: Get error for binance.us falling back to cryptocompare:', error)
       try {
-        const bars = await api.getBinanceKlines(symbolInfo, resolution, from, to) //await getPerpKlines(symbolInfo, resolution, from, to)
+        const bars = await api.getCryptoCompareKlines(symbolInfo, resolution, from, to, exchange)
         if (firstDataRequest) {
           lastBarsCache.set(symbolInfo.full_name, {
             ...bars[bars.length - 1],
           })
         }
-        if (firstDataRequest && bars.length === 0) {
-          throw 'no data'
-        }
-        onHistoryCallback(bars, { noData: bars.length === 0 ? true : false })
         console.log(`[getBars]: returned ${bars.length} bar(s)`)
+        onHistoryCallback(bars, {
+          noData: bars.length === 0 ? true : false,
+        })
+        // })
       } catch (error) {
-        console.log('[getBars]: Get error for binance.us falling back to cryptocompare:', error)
-        try {
-          const bars = await api.getCryptoCompareKlines(symbolInfo, resolution, from, to, exchange)
-          if (firstDataRequest) {
-            lastBarsCache.set(symbolInfo.full_name, {
-              ...bars[bars.length - 1],
-            })
-          } else {
-            onHistoryCallback([], { noData: true })
-          }
-          console.log(`[getBars]: returned ${bars.length} bar(s)`)
-
-          onHistoryCallback(bars, {
-            noData: false,
-          })
-          // })
-        } catch (error) {
-          console.log('[getBars]: Get error', error)
-          onErrorCallback(error)
-        }
-        // console.log('[getBars]: Get error', error)
-        // onErrorCallback(error)
+        console.log('[getBars]: Get error', error)
+        onErrorCallback(error)
       }
+      // console.log('[getBars]: Get error', error)
+      // onErrorCallback(error)
+      // }
     }
 
     return
