@@ -89,7 +89,38 @@ export default {
     const { exchange } = symbolInfo
     console.log('[getBars]: Method call', symbolInfo, resolution, from, to)
     console.log('symbol info', symbolInfo)
-    if (exchange === 'VolmexPerps') {
+
+    if (symbolInfo.name === 'TVIV') {
+      try {
+        const bars = await api.getTVIVKlines(symbolInfo, resolution, from, to)
+        if (firstDataRequest) {
+          lastBarsCache.set(symbolInfo.full_name, {
+            ...bars[bars.length - 1],
+          })
+        }
+
+        onHistoryCallback(bars, { noData: bars.length === 0 ? true : false })
+        console.log(`[getBars]: returned ${bars.length} bar(s)`)
+      } catch (error) {
+        console.log('[getBars]: Get error', error)
+        onErrorCallback(error)
+      }
+    } else if (symbolInfo.name === 'MVIV') {
+      try {
+        const bars = await api.getMVIVKlines(symbolInfo, resolution, from, to)
+        if (firstDataRequest) {
+          lastBarsCache.set(symbolInfo.full_name, {
+            ...bars[bars.length - 1],
+          })
+        }
+
+        onHistoryCallback(bars, { noData: bars.length === 0 ? true : false })
+        console.log(`[getBars]: returned ${bars.length} bar(s)`)
+      } catch (error) {
+        console.log('[getBars]: Get error', error)
+        onErrorCallback(error)
+      }
+    } else if (exchange === 'VolmexPerps') {
       const bars = await api.getPerpKlines(symbolInfo, resolution, from, to)
       if (firstDataRequest) {
         lastBarsCache.set(symbolInfo.full_name, {

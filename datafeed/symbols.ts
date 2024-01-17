@@ -177,17 +177,39 @@ export function getAllSymbols() {
 
   const generateIndexPriceSymbols = () => {
     // Only show ETH and BTC index price
-    return indexAssets.filter(i => i.symbol == 'ETH' || i.symbol == 'BTC').map((i) => {
-      return {
-        symbol: i.symbol + '/USD',
-        full_name: i.symbol + '/USD',
-        description: `${i.name} USD price`,
-        exchange: 'Coinbase',
-        type: 'crypto',
-      }
-    })
+    return indexAssets
+      .filter((i) => i.symbol == 'ETH' || i.symbol == 'BTC')
+      .map((i) => {
+        return {
+          symbol: i.symbol + '/USD',
+          full_name: i.symbol + '/USD',
+          description: `${i.name} USD price`,
+          exchange: 'Coinbase',
+          type: 'crypto',
+        }
+      })
   }
   console.log({ volmexSymbols })
   const extraSymbols = generateIndexPriceSymbols()
-  return volmexSymbols.concat(extraSymbols)
+  const generateTVIVSymbol = () => {
+    return {
+      symbol: 'TVIV',
+      full_name: 'TVIV',
+      description: `Total Volmex Implied Volatility Index`,
+      exchange: 'Volmex',
+      type: 'crypto',
+    }
+  }
+
+  const generateMVIVSymbol = () => {
+    return {
+      symbol: 'MVIV',
+      full_name: 'MVIV',
+      description: `Market Volmex Implied Volatility Index`,
+      exchange: 'Volmex',
+      type: 'crypto',
+    }
+  }
+
+  return volmexSymbols.concat(extraSymbols).concat(generateTVIVSymbol()).concat(generateMVIVSymbol())
 }

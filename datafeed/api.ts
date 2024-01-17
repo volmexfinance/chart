@@ -1,6 +1,38 @@
 import { apiBaseUrl } from './constants'
 import type { Bar, Resolution, SymbolInfo } from './types'
 
+function volmexHelpers() {
+  const calculateBack3Days = (to: number) => {
+    const back3Days = 3 * 24 * 60 * 60
+    return to - back3Days
+  }
+  const calculateBack40Days = (to: number) => {
+    const back40Days = 40 * 24 * 60 * 60
+    return to - back40Days
+  }
+  const calculateBack1000Days = (to: number) => {
+    const back1000Days = 1000 * 24 * 60 * 60
+    return to - back1000Days
+  }
+
+  const resolutionToInterval = {
+    '1': '1',
+    '5': '5',
+    '15': '15',
+    '60': '60',
+    '240': '60',
+    '1D': 'D',
+    // ''
+  }
+
+  return {
+    calculateBack3Days,
+    calculateBack40Days,
+    calculateBack1000Days,
+    resolutionToInterval,
+  }
+}
+
 async function getVolmexKlines(
   symbolInfo: SymbolInfo,
   resolution: Resolution,
@@ -124,15 +156,16 @@ async function getVolmexKlines(
   url.searchParams.append('resolution', resolutionToInterval[resolution]) // 1, 5, 15, 30, 60
   url.searchParams.append(
     'from',
-    String(
-      resolution === '1' || resolution === '5' || resolution === '15'
-        ? calculateBack3Days(to)
-        : resolution === '60'
-        ? calculateBack40Days(to)
-        : resolution === '1D'
-        ? calculateBack1000Days(to)
-        : from
-    )
+    from.toString()
+    // String(
+    //   resolution === '1' || resolution === '5' || resolution === '15'
+    //     ? calculateBack3Days(to)
+    //     : resolution === '60'
+    //     ? calculateBack40Days(to)
+    //     : resolution === '1D'
+    //     ? calculateBack1000Days(to)
+    //     : from
+    // )
   )
   url.searchParams.append('to', String(to))
   const response = await fetch(url, {
@@ -228,6 +261,108 @@ async function getPerpKlines(symbolInfo: SymbolInfo, resolution: Resolution, fro
   return bars
 }
 
+async function getVolmexTVIVKlines(_: SymbolInfo, resolution: Resolution, from: number, to: number): Promise<Bar[]> {
+  // const { calculateBack3Days, calculateBack40Days, calculateBack1000Days, resolutionToInterval } = volmexHelpers()
+  const urlString = `${apiBaseUrl}/public/tviv/history`
+  const resolutionToInterval = {
+    '1': '1',
+    '5': '5',
+    '15': '15',
+    '60': '60',
+    '240': '60',
+    '1D': 'D',
+    // ''
+  }
+
+  const url = new URL(urlString)
+  url.searchParams.append('resolution', resolutionToInterval[resolution]) // 1, 5, 15, 30, 60
+  url.searchParams.append(
+    'from',
+    from.toString()
+    // String(
+    //   resolution === '1' || resolution === '5' || resolution === '15'
+    //     ? calculateBack3Days(to)
+    //     : resolution === '60'
+    //     ? calculateBack40Days(to)
+    //     : resolution === '1D'
+    //     ? calculateBack1000Days(to)
+    //     : from
+    // )
+  )
+  url.searchParams.append('to', String(to))
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'content-type': 'application/json',
+    },
+  })
+  const data = await response.json()
+
+  const bars = data.t.map((timestamp: any, i: number) => {
+    return {
+      time: timestamp * 1000,
+      low: data.l[i],
+      high: data.h[i],
+      open: data.o[i],
+      close: data.c[i],
+      volume: data.v[i],
+    }
+  })
+
+  return bars
+}
+
+async function getVolmexMVIVKlines(_: SymbolInfo, resolution: Resolution, from: number, to: number): Promise<Bar[]> {
+  // const { calculateBack3Days, calculateBack40Days, calculateBack1000Days, resolutionToInterval } = volmexHelpers()
+  const urlString = `${apiBaseUrl}/public/mvivtviv/history`
+  const resolutionToInterval = {
+    '1': '1',
+    '5': '5',
+    '15': '15',
+    '60': '60',
+    '240': '60',
+    '1D': 'D',
+    // ''
+  }
+
+  const url = new URL(urlString)
+  url.searchParams.append('resolution', resolutionToInterval[resolution]) // 1, 5, 15, 30, 60
+  url.searchParams.append(
+    'from',
+    from.toString()
+    // String(
+    //   resolution === '1' || resolution === '5' || resolution === '15'
+    //     ? calculateBack3Days(to)
+    //     : resolution === '60'
+    //     ? calculateBack40Days(to)
+    //     : resolution === '1D'
+    //     ? calculateBack1000Days(to)
+    //     : from
+    // )
+  )
+  url.searchParams.append('to', String(to))
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'content-type': 'application/json',
+    },
+  })
+  const data = await response.json()
+
+  const bars = data.t.map((timestamp: any, i: number) => {
+    return {
+      time: timestamp * 1000,
+      low: data.l[i],
+      high: data.h[i],
+      open: data.o[i],
+      close: data.c[i],
+      volume: data.v[i],
+    }
+  })
+
+  return bars
+}
+
 async function getCryptoCompareKlines(
   symbolInfo: SymbolInfo,
   resolution: Resolution,
@@ -241,46 +376,74 @@ async function getCryptoCompareKlines(
   const urlPath =
     resolution === '1D' ? '/data/v2/histoday' : resolution == '60' ? '/data/v2/histohour' : '/data/v2/histominute'
 
-  while (true) {
-    const qs = {
-      e: exchange,
-      fsym: split_symbol[0],
-      tsym: split_symbol[1],
-      toTs: to ? to.toString() : '',
-      limit: 2000,
-    }
-
-    const url =
-      `https://min-api.cryptocompare.com${urlPath}?${new URLSearchParams(qs)}` +
-      `&api_key=21a0180901d0804c155a2c86a22a26a32f4ee5fdac05b7a029bf337048139cb0`
-    const response = await fetch(url)
-    const data = await response.json()
-
-    if ((data.Response && data.Response === 'Error') || !data.Data.Data.length) {
-      // console.log('CryptoCompare API error:',data.Message)
-      break
-    }
-    var newBars = data.Data.Data.map((el: any) => {
-      return {
-        time: el.time * 1000, //TradingView requires bar time in ms
-        low: el.low,
-        high: el.high,
-        open: el.open,
-        close: el.close,
-        volume: el.volumefrom,
-      }
-    })
-
-    bars = [...newBars, ...bars]
-
-    // If the earliest bar's time is less than 'from', break the loop
-    if (newBars[0].time <= from) {
-      break
-    }
-
-    // Set 'to' to the time of the earliest bar for the next request
-    to = newBars[0].time / 1000
+  const qs = {
+    e: exchange,
+    fsym: split_symbol[0],
+    tsym: split_symbol[1],
+    toTs: to ? to.toString() : '',
+    limit: 2000,
   }
+
+  const url =
+    `https://min-api.cryptocompare.com${urlPath}?${new URLSearchParams(qs)}` +
+    `&api_key=21a0180901d0804c155a2c86a22a26a32f4ee5fdac05b7a029bf337048139cb0`
+  const response = await fetch(url)
+  const data = await response.json()
+
+  if ((data.Response && data.Response === 'Error') || !data.Data.Data.length) {
+    // console.log('CryptoCompare API error:',data.Message)
+    return bars
+  }
+  bars = data.Data.Data.map((el: any) => {
+    return {
+      time: el.time * 1000, //TradingView requires bar time in ms
+      low: el.low,
+      high: el.high,
+      open: el.open,
+      close: el.close,
+      volume: el.volumefrom,
+    }
+  })
+  // while (true) {
+  //   const qs = {
+  //     e: exchange,
+  //     fsym: split_symbol[0],
+  //     tsym: split_symbol[1],
+  //     toTs: to ? to.toString() : '',
+  //     limit: 2000,
+  //   }
+
+  //   const url =
+  //     `https://min-api.cryptocompare.com${urlPath}?${new URLSearchParams(qs)}` +
+  //     `&api_key=21a0180901d0804c155a2c86a22a26a32f4ee5fdac05b7a029bf337048139cb0`
+  //   const response = await fetch(url)
+  //   const data = await response.json()
+
+  //   if ((data.Response && data.Response === 'Error') || !data.Data.Data.length) {
+  //     // console.log('CryptoCompare API error:',data.Message)
+  //     break
+  //   }
+  //   var newBars = data.Data.Data.map((el: any) => {
+  //     return {
+  //       time: el.time * 1000, //TradingView requires bar time in ms
+  //       low: el.low,
+  //       high: el.high,
+  //       open: el.open,
+  //       close: el.close,
+  //       volume: el.volumefrom,
+  //     }
+  //   })
+
+  //   bars = [...newBars, ...bars]
+
+  //   // If the earliest bar's time is less than 'from', break the loop
+  //   if (newBars[0].time <= from) {
+  //     break
+  //   }
+
+  //   // Set 'to' to the time of the earliest bar for the next request
+  //   to = newBars[0].time / 1000
+  // }
 
   return bars
 }
@@ -340,6 +503,8 @@ const api: {
   getVolmexKlines: middleware(getVolmexKlines),
   getCryptoCompareKlines: getCryptoCompareKlines,
   getPerpKlines: middleware(getPerpKlines),
+  getTVIVKlines: middleware(getVolmexTVIVKlines),
+  getMVIVKlines: middleware(getVolmexMVIVKlines),
 }
 
 export default api
