@@ -373,77 +373,77 @@ async function getCryptoCompareKlines(
   const { exchange } = symbolInfo
   let bars: Bar[] = []
 
-  const urlPath =
-    resolution === '1D' ? '/data/v2/histoday' : resolution == '60' ? '/data/v2/histohour' : '/data/v2/histominute'
+  const fetchCryptoCompare = async (symbolInfo: SymbolInfo, resolution: Resolution, to: number): Promise<Bar[]> => {
+    var split_symbol = symbolInfo.name.split(/[:/]/)
+    const { exchange } = symbolInfo
+    let bars: Bar[] = []
 
-  const qs = {
-    e: exchange,
-    fsym: split_symbol[0],
-    tsym: split_symbol[1],
-    toTs: to ? to.toString() : '',
-    limit: 2000,
-  }
+    const urlPath =
+      resolution === '1D' ? '/data/v2/histoday' : resolution == '60' ? '/data/v2/histohour' : '/data/v2/histominute'
 
-  const url =
-    `https://min-api.cryptocompare.com${urlPath}?${new URLSearchParams(qs)}` +
-    `&api_key=21a0180901d0804c155a2c86a22a26a32f4ee5fdac05b7a029bf337048139cb0`
-  const response = await fetch(url)
-  const data = await response.json()
+    const aggregate = resolution === '1D' ? 1 : resolution === '60' ? 1 : resolution
 
-  if ((data.Response && data.Response === 'Error') || !data.Data.Data.length) {
-    // console.log('CryptoCompare API error:',data.Message)
+    const qs = {
+      e: exchange,
+      fsym: split_symbol[0],
+      tsym: split_symbol[1],
+      toTs: to ? to.toString() : '',
+      limit: 2000,
+      aggregate,
+    }
+
+    const url =
+      `https://min-api.cryptocompare.com${urlPath}?${new URLSearchParams(qs)}` +
+      `&api_key=21a0180901d0804c155a2c86a22a26a32f4ee5fdac05b7a029bf337048139cb0`
+    const response = await fetch(url)
+    const data = await response.json()
+
+    if ((data.Response && data.Response === 'Error') || !data.Data.Data.length) {
+      // console.log('CryptoCompare API error:',data.Message)
+      return bars
+    }
+    bars = data.Data.Data.map((el: any) => {
+      return {
+        time: el.time * 1000, //TradingView requires bar time in ms
+        low: el.low,
+        high: el.high,
+        open: el.open,
+        close: el.close,
+        volume: el.volumefrom,
+      }
+    })
+
     return bars
   }
-  bars = data.Data.Data.map((el: any) => {
-    return {
-      time: el.time * 1000, //TradingView requires bar time in ms
-      low: el.low,
-      high: el.high,
-      open: el.open,
-      close: el.close,
-      volume: el.volumefrom,
-    }
-  })
-  // while (true) {
-  //   const qs = {
-  //     e: exchange,
-  //     fsym: split_symbol[0],
-  //     tsym: split_symbol[1],
-  //     toTs: to ? to.toString() : '',
-  //     limit: 2000,
-  //   }
 
-  //   const url =
-  //     `https://min-api.cryptocompare.com${urlPath}?${new URLSearchParams(qs)}` +
-  //     `&api_key=21a0180901d0804c155a2c86a22a26a32f4ee5fdac05b7a029bf337048139cb0`
-  //   const response = await fetch(url)
-  //   const data = await response.json()
+  if (resolution === '1D' || resolution === '60') {
+    const _bars = await fetchCryptoCompare(symbolInfo, resolution, to)
+    bars = [..._bars, ...bars]
+  } else {
+    // calculate time in ms one day ago (UTC)
+    const oneDayAgo = to - 24 * 60 * 60
+    const twoDaysAgo = to - 2 * 24 * 60 * 60
 
-  //   if ((data.Response && data.Response === 'Error') || !data.Data.Data.length) {
-  //     // console.log('CryptoCompare API error:',data.Message)
-  //     break
-  //   }
-  //   var newBars = data.Data.Data.map((el: any) => {
-  //     return {
-  //       time: el.time * 1000, //TradingView requires bar time in ms
-  //       low: el.low,
-  //       high: el.high,
-  //       open: el.open,
-  //       close: el.close,
-  //       volume: el.volumefrom,
-  //     }
-  //   })
+    console.log('twoDaysAgo', twoDaysAgo)
+    // const _bars = await fetchCryptoCompare(symbolInfo, resolution, oneDayAgo)
 
-  //   bars = [...newBars, ...bars]
+    // use promise all
+    const _bars = await Promise.all([
+      fetchCryptoCompare(symbolInfo, resolution, to),
+      fetchCryptoCompare(symbolInfo, resolution, oneDayAgo),
+      fetchCryptoCompare(symbolInfo, resolution, twoDaysAgo),
+    ])
 
-  //   // If the earliest bar's time is less than 'from', break the loop
-  //   if (newBars[0].time <= from) {
-  //     break
-  //   }
+    bars = [..._bars[2], ..._bars[1], ..._bars[0]]
 
-  //   // Set 'to' to the time of the earliest bar for the next request
-  //   to = newBars[0].time / 1000
-  // }
+    // order the bars based on timestamp
+    bars = bars.sort((a, b) => a.time - b.time)
+
+    // avoid duplicate bars
+    bars = bars.filter((bar, index, self) => {
+      return index === self.findIndex((t) => t.time === bar.time)
+    })
+  }
 
   return bars
 }
