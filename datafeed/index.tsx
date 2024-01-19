@@ -17,13 +17,15 @@ const configurationData = {
 
 let firstDataRequestCache = new Map()
 
-export default {
-  onReady: (callback: (s: any) => void) => {
+class TradingViewDatafeed {
+  private isUsdChart = false
+
+  onReady(callback: (s: any) => void) {
     console.log('[onReady]: Method call')
     setTimeout(() => callback(configurationData))
-  },
+  }
 
-  searchSymbols: async (userInput: any, exchange: any, symbolType: any, onResultReadyCallback: any) => {
+  async searchSymbols(userInput: any, exchange: any, symbolType: any, onResultReadyCallback: any) {
     console.log('[searchSymbols]: Method call')
     const symbols = await getAllSymbols()
     const newSymbols = symbols.filter((symbol) => {
@@ -35,13 +37,13 @@ export default {
       return isFullSymbolContainsInput || isDescriptionContainsInput || isExchangeContainsInput
     })
     onResultReadyCallback(newSymbols)
-  },
+  }
 
-  resolveSymbol: async (
+  async resolveSymbol(
     symbolName: string,
     onSymbolResolvedCallback: (s: any) => void,
     onResolveErrorCallback: (s: any) => void
-  ) => {
+  ) {
     const symbols = await getAllSymbols()
     console.log({ symbols })
     const symbolItem = symbols.find(({ symbol }) => symbol === symbolName)
@@ -53,6 +55,10 @@ export default {
     }
 
     console.log('symbolName', symbolName)
+
+    if (symbolName.split('/')[1] === 'USD') {
+      this.isUsdChart = true
+    }
 
     const symbolInfo: LibrarySymbolInfo = {
       ticker: symbolName,
@@ -74,21 +80,22 @@ export default {
 
     console.log('[resolveSymbol]: Symbol resolved', symbolName)
     onSymbolResolvedCallback(symbolInfo)
-  },
+  }
 
-  getBars: async (
+  async getBars(
     symbolInfo: SymbolInfo,
     resolution: Resolution,
     periodParams: any,
     onHistoryCallback: (s: any, options: any) => void,
     onErrorCallback: (s: any) => void
-  ) => {
+  ) {
     const { from: unsafeFrom, to, firstDataRequest } = periodParams
 
     const from = Math.max(0, unsafeFrom)
     const { exchange } = symbolInfo
     console.log('[getBars]: Method call', symbolInfo, resolution, from, to)
     console.log('symbol info', symbolInfo)
+    console.log('isUsdChart', this.isUsdChart)
 
     const fromMs = from * 1000
     const toMs = to * 1000
@@ -97,8 +104,11 @@ export default {
     const now = new Date().getTime()
     const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000
 
-    // If the requested period is more than seven days ago, return no data
-    if (fromMs < sevenDaysAgo && (resolution === '15' || resolution === '5' || resolution === '1')) {
+    // if (symbolInfo.name.split('/')[1] === 'USD') {
+    //   isUsdChart = true
+    // }
+
+    if (fromMs < sevenDaysAgo && (resolution === '15' || resolution === '5' || resolution === '1') && this.isUsdChart) {
       onHistoryCallback([], { noData: true })
       return
     }
@@ -195,15 +205,15 @@ export default {
     }
 
     return
-  },
+  }
 
-  subscribeBars: (
+  subscribeBars(
     symbolInfo: SymbolInfo,
     resolution: Resolution,
     onRealtimeCallback: (s: any) => void,
     subscribeUID: string,
     onResetCacheNeededCallback: (s: any) => void
-  ) => {
+  ) {
     return
     if (!(symbolInfo.name === 'EVIV' || symbolInfo.name === 'BVIV')) return
     console.log('[subscribeBars]: Method call with subscribeUID:', subscribeUID)
@@ -215,10 +225,12 @@ export default {
       onResetCacheNeededCallback,
       lastBarsCache.get(symbolInfo.full_name)
     )
-  },
+  }
 
-  unsubscribeBars: (subscriberUID: string) => {
+  unsubscribeBars(subscriberUID: string) {
     console.log('[unsubscribeBars]: Method call with subscriberUID:', subscriberUID)
     unsubscribeFromStream(subscriberUID)
-  },
+  }
 }
+
+export default TradingViewDatafeed

@@ -56,7 +56,7 @@ export class TVChart extends React.PureComponent<Partial<ChartContainerProps>, C
       // BEWARE: no trailing slash is expected in feed URL
       // tslint:disable-next-line:no-any
       // datafeed: new Datafeeds.UDFCompatibleDatafeed(this.props.datafeedUrl),
-      datafeed: Datafeed,
+      datafeed: new Datafeed(),
       interval: this.props.interval as ChartingLibraryWidgetOptions['interval'],
       container: this.ref.current,
       library_path: this.props.libraryPath as string,
