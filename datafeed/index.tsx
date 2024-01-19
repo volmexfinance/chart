@@ -90,6 +90,19 @@ export default {
     console.log('[getBars]: Method call', symbolInfo, resolution, from, to)
     console.log('symbol info', symbolInfo)
 
+    const fromMs = from * 1000
+    const toMs = to * 1000
+
+    // Get the current time and the time seven days ago
+    const now = new Date().getTime()
+    const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000
+
+    // If the requested period is more than seven days ago, return no data
+    if (fromMs < sevenDaysAgo && (resolution === '15' || resolution === '5' || resolution === '1')) {
+      onHistoryCallback([], { noData: true })
+      return
+    }
+
     if (symbolInfo.name === 'TVIV') {
       try {
         const bars = await api.getTVIVKlines(symbolInfo, resolution, from, to)
