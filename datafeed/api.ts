@@ -312,6 +312,57 @@ async function getVolmexTVIVKlines(_: SymbolInfo, resolution: Resolution, from: 
   return bars
 }
 
+async function getVolmexDVIVKlines(_: SymbolInfo, resolution: Resolution, from: number, to: number): Promise<Bar[]> {
+  // const { calculateBack3Days, calculateBack40Days, calculateBack1000Days, resolutionToInterval } = volmexHelpers()
+  const urlString = `${apiBaseUrl}/public/dviv/history`
+  const resolutionToInterval = {
+    '1': '1',
+    '5': '5',
+    '15': '15',
+    '60': '60',
+    '240': '60',
+    '1D': 'D',
+    // ''
+  }
+
+  const url = new URL(urlString)
+  url.searchParams.append('resolution', resolutionToInterval[resolution]) // 1, 5, 15, 30, 60
+  url.searchParams.append(
+    'from',
+    from.toString()
+    // String(
+    //   resolution === '1' || resolution === '5' || resolution === '15'
+    //     ? calculateBack3Days(to)
+    //     : resolution === '60'
+    //     ? calculateBack40Days(to)
+    //     : resolution === '1D'
+    //     ? calculateBack1000Days(to)
+    //     : from
+    // )
+  )
+  url.searchParams.append('to', String(to))
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'content-type': 'application/json',
+    },
+  })
+  const data = await response.json()
+
+  const bars = data.t.map((timestamp: any, i: number) => {
+    return {
+      time: timestamp * 1000,
+      low: data.l[i],
+      high: data.h[i],
+      open: data.o[i],
+      close: data.c[i],
+      volume: data.v[i],
+    }
+  })
+
+  return bars
+}
+
 async function getVolmexMVIVKlines(_: SymbolInfo, resolution: Resolution, from: number, to: number): Promise<Bar[]> {
   // const { calculateBack3Days, calculateBack40Days, calculateBack1000Days, resolutionToInterval } = volmexHelpers()
   const urlString = `${apiBaseUrl}/public/mvivtviv/history`
@@ -505,6 +556,7 @@ const api: {
   getPerpKlines: middleware(getPerpKlines),
   getTVIVKlines: middleware(getVolmexTVIVKlines),
   getMVIVKlines: middleware(getVolmexMVIVKlines),
+  getDVIVKlines: middleware(getVolmexDVIVKlines),
 }
 
 export default api

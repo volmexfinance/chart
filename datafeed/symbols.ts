@@ -211,5 +211,19 @@ export function getAllSymbols() {
     }
   }
 
-  return volmexSymbols.concat(extraSymbols).concat(generateTVIVSymbol()).concat(generateMVIVSymbol())
+  const generateDVIVSymbol = () => {
+    return {
+      symbol: 'DVIV',
+      full_name: 'DVIV',
+      description: `Market Volmex Implied Volatility Index`,
+      exchange: 'Volmex',
+      type: 'crypto',
+    }
+  }
+
+  return volmexSymbols
+    .concat(extraSymbols)
+    .concat(generateTVIVSymbol())
+    .concat(generateMVIVSymbol())
+    .concat(generateDVIVSymbol())
 }

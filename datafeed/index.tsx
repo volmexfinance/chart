@@ -128,6 +128,21 @@ class TradingViewDatafeed {
         console.log('[getBars]: Get error', error)
         onErrorCallback(error)
       }
+    } else if (symbolInfo.name === 'DVIV') {
+      try {
+        const bars = await api.getDVIVKlines(symbolInfo, resolution, from, to)
+        if (firstDataRequest) {
+          lastBarsCache.set(symbolInfo.full_name, {
+            ...bars[bars.length - 1],
+          })
+        }
+
+        onHistoryCallback(bars, { noData: bars.length === 0 ? true : false })
+        console.log(`[getBars]: returned ${bars.length} bar(s)`)
+      } catch (error) {
+        console.log('[getBars]: Get error', error)
+        onErrorCallback(error)
+      }
     } else if (symbolInfo.name === 'MVIV') {
       try {
         const bars = await api.getMVIVKlines(symbolInfo, resolution, from, to)
