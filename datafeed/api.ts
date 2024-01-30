@@ -85,9 +85,13 @@ async function getVolmexKlines(
     }
     return symbolInfo.name[0] === 'E' ? 'ETH' : 'BTC'
   }
+
+  const urlParams = new URLSearchParams(window.location.search)
+
   const getUrlString = (symbolInfo: SymbolInfo) => {
     if (symbolInfo.name.includes('VIV')) {
-      const url = new URL(`${apiBaseUrl}/public/iv/history`)
+      const provider = urlParams.get('provider') || 'global'
+      const url = new URL(`${apiBaseUrl}/public/iv/history?provider=${provider}`)
       url.searchParams.append('symbol', symbol)
       return url.toString()
     } else if (symbolInfo.name.includes('VRV')) {
