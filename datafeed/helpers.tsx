@@ -53,11 +53,6 @@ export function getNextBarTime(resolution: Resolution) {
 
 export const getChainIdRelayer = (chainId: ChainId) => {
   switch (chainId) {
-    case ChainId.Mumbai:
-      throw 'Mumbai not supported'
-      return 'POS'
-    case ChainId.ArbitrumGoerli:
-      return 'ARB'
     case ChainId.ArbitrumSepolia:
       return 'ARB'
     case ChainId.BaseSepolia:
