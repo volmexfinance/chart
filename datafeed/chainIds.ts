@@ -57,7 +57,7 @@ export enum ChainId {
     RootstockTestnet = 31,
     KlaytnTestnet = 1001,
     Klaytn = 8217,
-    BaseGoerli = 84531,
+    BaseSepolia = 84532,
     ScrollAlpha = 534353,
     LineaTestnet = 59140,
     ArbitrumNova = 42170,

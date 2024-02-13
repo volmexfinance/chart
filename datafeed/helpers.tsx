@@ -60,7 +60,7 @@ export const getChainIdRelayer = (chainId: ChainId) => {
       return 'ARB'
     case ChainId.ArbitrumSepolia:
       return 'ARB'
-    case ChainId.BaseGoerli:
+    case ChainId.BaseSepolia:
       return 'BSG'
     case ChainId.ZkSyncTestnet:
       return 'ZKSYNC'

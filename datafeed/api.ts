@@ -161,13 +161,13 @@ async function getPerpKlines(symbolInfo: SymbolInfo, resolution: Resolution, fro
       ETH: process.env.REACT_APP_ARBITRUM_ETHUSD!,
       BTC: process.env.REACT_APP_ARBITRUM_BTCUSD!,
     },
-    [ChainId.BaseGoerli]: {
+    [ChainId.BaseSepolia]: {
       EVIV: process.env.REACT_APP_BASE_EVIV!,
       BVIV: process.env.REACT_APP_BASE_BVIV!, // TODO: remove with BTC base token address
       ETH: process.env.REACT_APP_BASE_ETHUSD!,
       BTC: process.env.REACT_APP_BASE_BTCUSD!,
     },
-  }[chainId as ChainId.ArbitrumSepolia | ChainId.BaseGoerli][symbol as 'EVIV' | 'BVIV' | 'ETH' | 'BTC']
+  }[chainId as ChainId.ArbitrumSepolia | ChainId.BaseSepolia][symbol as 'EVIV' | 'BVIV' | 'ETH' | 'BTC']
 
   const { resolutionToInterval, calculateBack3Days, calculateBack40Days, calculateBack1000Days } = VOLMEX_API_CONSTANTS
 
