@@ -1,3 +1,5 @@
+import { isPerpsApp } from "./constants"
+
 export function getAllSymbols() {
   // const indexAssets = getTokenList('index', 80001)
   const indexAssets = [
@@ -189,7 +191,7 @@ export function getAllSymbols() {
   
     // assuming if REACT_APP_ENABLED_CHAIN_IDS is set, then we want to show perps symbols
     const volmexSymbolsPerps: any[] = []
-    if (process.env.REACT_APP_ENABLED_CHAIN_IDS != undefined) {
+    if (isPerpsApp() && process.env.REACT_APP_ENABLED_CHAIN_IDS != undefined) {
       volmexSymbolsPerps.push(
         ...[{ symbol: 'EVIV:PERP' }, { symbol: 'BVIV:PERP' }, { symbol: 'ETH:PERP' }, { symbol: 'BTC:PERP' }].flatMap(
           (index) =>
