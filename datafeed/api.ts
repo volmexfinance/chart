@@ -1,5 +1,5 @@
 import { ChainId } from './chainIds'
-import { apiBaseUrl } from './constants'
+import { apiBaseUrl, getPerpsTokenAddr, getPerpsUrl } from './constants'
 import { getChainIdRelayer } from './helpers'
 import type { Bar, Resolution, SymbolInfo } from './types'
 import { VOLMEX_API_CONSTANTS } from './volmexApiHelpers'
@@ -148,26 +148,13 @@ async function getPerpKlines(symbolInfo: SymbolInfo, resolution: Resolution, fro
   const [symbol, _, _chainId, priceType] = ticker.split(':') as [string, string, string, 'LAST_PRICE' | 'MARK_PRICE']
   const getUrlString = (token: string) => {
     const chainIdRelayer = getChainIdRelayer(chainId)
-    const baseUrl = process.env.REACT_APP_PERPS_API_URL
+    const baseUrl = getPerpsUrl()
     return `${baseUrl}/api/v1/perpetuals/${
       priceType == 'LAST_PRICE' ? 'last' : 'mark'
     }_prices_history/${chainIdRelayer}/${token}`
   }
   const chainId = Number(_chainId)
-  const tokenAddr = {
-    [ChainId.ArbitrumSepolia]: {
-      EVIV: process.env.REACT_APP_ARBITRUM_EVIV!,
-      BVIV: process.env.REACT_APP_ARBITRUM_BVIV!, // TODO: remove with BTC base token address
-      ETH: process.env.REACT_APP_ARBITRUM_ETHUSD!,
-      BTC: process.env.REACT_APP_ARBITRUM_BTCUSD!,
-    },
-    [ChainId.BaseSepolia]: {
-      EVIV: process.env.REACT_APP_BASE_EVIV!,
-      BVIV: process.env.REACT_APP_BASE_BVIV!, // TODO: remove with BTC base token address
-      ETH: process.env.REACT_APP_BASE_ETHUSD!,
-      BTC: process.env.REACT_APP_BASE_BTCUSD!,
-    },
-  }[chainId as ChainId.ArbitrumSepolia | ChainId.BaseSepolia][symbol as 'EVIV' | 'BVIV' | 'ETH' | 'BTC']
+  const tokenAddr = getPerpsTokenAddr(chainId, symbol as 'EVIV' | 'BVIV' | 'ETH' | 'BTC')
 
   const { resolutionToInterval, calculateBack3Days, calculateBack40Days, calculateBack1000Days } = VOLMEX_API_CONSTANTS
 

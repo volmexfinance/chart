@@ -7,6 +7,7 @@ import {
   LanguageCode,
 } from './charting_library/charting_library'
 import Datafeed from './datafeed'
+import { isPerpsApp } from './datafeed/constants'
 
 export interface ChartContainerProps extends ChartingLibraryWidgetOptions {
   symbol: ChartingLibraryWidgetOptions['symbol']
@@ -75,7 +76,8 @@ export class TVChart extends React.PureComponent<Partial<ChartContainerProps>, C
         // 'header_screenshot',
         // 'header_fullscreen_button',
         // 'create_volume_indicator_by_default',
-        // 'header_symbol_search',
+        isPerpsApp() ? 'header_symbol_search' : '',
+        isPerpsApp() ? 'header_compare' : '',
         // 'show_hide_button_in_legend',
       ],
       enabled_features: [
@@ -161,20 +163,6 @@ export class TVChart extends React.PureComponent<Partial<ChartContainerProps>, C
         }
 
         this.tvWidget = tvWidget
-
-        // const button = tvWidget.createButton()
-        // button.setAttribute('title', 'Click to show a notification popup')
-        // button.classList.add('apply-common-tooltip')
-        // button.addEventListener('click', () =>
-        //   tvWidget.showNoticeDialog({
-        //     title: 'Notification',
-        //     body: 'TradingView Charting Library API works correctly',
-        //     callback: () => {
-        //       console.log('Noticed!')
-        //     },
-        //   })
-        // )
-        // button.innerHTML = 'Check API'
       })
     })
   }
