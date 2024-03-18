@@ -1,5 +1,5 @@
-import type { Resolution } from '.'
 import { getNextBarTime, parseResolution } from './helpers'
+import { Resolution } from './types'
 
 type Bar = {
   time: number
@@ -124,13 +124,11 @@ export function subscribeOnStream(
         firstTime: true,
       })
       subscribeToReader(subscribeUID, symbol, resolution)
-      subscribeToReader(subscribeUID, symbol, resolution)
     } else if (!subscriptionItem.reader) {
       // already subscribed to reader
       subscriptionItem.onRealtimeCallback = onRealtimeCallback
       subscriptionItem.enabled = true
       subscriptionItem.firstTime = true
-      subscribeToReader(subscribeUID, symbol, resolution)
       subscribeToReader(subscribeUID, symbol, resolution)
     }
   } catch (e) {
