@@ -1,6 +1,7 @@
 import type { LibrarySymbolInfo, ResolutionString } from '../charting_library/charting_library'
 import { getTokenList } from '../utils'
 import api from './api'
+import { isPerpsApp } from './constants'
 import { subscribeOnStream, unsubscribeFromStream } from './streaming'
 import { getAllSymbols } from './symbols'
 import type { Resolution, SymbolInfo } from './types'
@@ -54,7 +55,7 @@ export default {
     // @ts-ignore
     const symbolInfo: LibrarySymbolInfo = {
       ticker: symbolName,
-      name: symbolItem.symbol,
+      name: symbolItem.symbol.split(':')[0],
       description: symbolItem.description,
       type: symbolItem.type,
       session: '24x7',
@@ -180,9 +181,14 @@ export default {
     subscribeUID: string,
     onResetCacheNeededCallback: (s: any) => void
   ) => {
-    return
-    if (!(symbolInfo.name === 'EVIV' || symbolInfo.name === 'BVIV')) return
-    console.log('[subscribeBars]: Method call with subscribeUID:', subscribeUID)
+    if (isPerpsApp()) {
+      if (!symbolInfo.full_name.includes('Perps')) {
+        return
+      }
+    } else {
+      if (!(symbolInfo.name === 'EVIV' || symbolInfo.name === 'BVIV')) return
+    }
+    console.log('[subscribeBars]: Method call with subscribeUID:', subscribeUID, symbolInfo)
     subscribeOnStream(
       symbolInfo,
       resolution,

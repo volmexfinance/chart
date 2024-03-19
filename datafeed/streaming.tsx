@@ -1,4 +1,6 @@
-import { getNextBarTime, parseResolution } from './helpers'
+import { LibrarySymbolInfo } from '../charting_library/charting_library'
+import { getPerpsTokenAddr, getPerpsUrl, isPerpsApp } from './constants'
+import { getChainIdRelayer, getNextBarTime, parseResolution } from './helpers'
 import { Resolution } from './types'
 
 type Bar = {
@@ -13,49 +15,43 @@ type Subscription = {
   enabled: boolean
   lastBar?: Bar
   reader?: ReadableStreamDefaultReader
-  firstTime: boolean
 }
 
 type SubscriptionUID = string
 const subscriptions = new Map<SubscriptionUID, Subscription>()
-// todo: reduce to one subscription per symbol (currently it does 2 for each symbol which is not needed)
+
 async function subscribeToReader(subscribeUID: string, symbol: string, resolution: Resolution) {
+  if (!isPerpsApp()) throw 'TODO: to implement'
   const subscriptionItem = subscriptions.get(subscribeUID)
   if (!subscriptionItem) {
     console.error('[subscribeToReader]: Unable to find subscription item')
     return
-  } else if (!subscriptionItem.firstTime) {
+  } else if (subscriptionItem.reader) {
     console.log('[subscribeToReader]: Already subscribed to reader', subscribeUID)
     return
   }
-  // else if (subscriptionItem.reader) {
-  //   console.error('[subscribeToReader]: Already subscribed to reader')
-  //   return
-  // } else if (!subscriptionItem.enabled) {
-  //   console.error('[subscribeToReader]: Subscription is disabled')
-  //   return
-  // } else if (!subscriptionItem.firstTime) {
-  //   return
-  // }
-  subscriptionItem.firstTime = false
-  const url = new URL('https://rest-v1.volmex.finance/public/iv/streaming')
 
-  const resolutionMap = {
-    '1': '1',
-    '5': '5',
-    '15': '15',
-    '60': '60',
-    '1D': 'D',
+  const [ticker, _, chainId, mode] = symbol.split(':') // ex: ETH:PERP:421614:LAST_PRICE
+
+  let modeType 
+  if (mode == 'LAST_PRICE') {
+    modeType = 'lastPrice'
+  } else if (mode == 'MARK_PRICE') {
+    modeType = 'markPrice'
+  } else {
+    throw 'unsupported mode'
   }
-  url.searchParams.append('symbol', symbol)
-  url.searchParams.append('resolution', resolutionMap[resolution])
-  const ivProvider = window.location.search.split('iv_provider=')[1]
-  if (ivProvider) {
-    url.searchParams.append('iv_provider', ivProvider)
+
+  if (ticker != 'ETH' && ticker != 'BTC' && ticker != 'EVIV' && ticker != 'BVIV') {
+    throw 'ticker unsupported'
   }
+  const addr = getPerpsTokenAddr(Number(chainId), ticker)
+
+
   let response
   try {
-    response = await fetch(url)
+    response = await fetch(`${getPerpsUrl()}/api/v1/perpetuals/streaming/markets/${getChainIdRelayer(Number(chainId))}/${addr}`)
+    console.log(response)
   } catch (e) {
     console.error('error connecting to stream', e)
   }
@@ -76,33 +72,34 @@ async function subscribeToReader(subscribeUID: string, symbol: string, resolutio
       console.error('error reading stream', e)
     }
     if (done) {
+      await reader.cancel()
+      subscriptionItem.enabled = false
+      subscriptionItem.reader = undefined
       console.log('reader done')
       break
     }
     const rawTimeseries = new TextDecoder().decode(value).split('\n')
+    console.log("streamingTimeseries", rawTimeseries)
     const parsedTimeseries = JSON.parse(rawTimeseries[0])
     const timeseries = {
-      open: parsedTimeseries.o,
-      high: parsedTimeseries.h,
-      low: parsedTimeseries.l,
-      close: parsedTimeseries.c,
-      time: parsedTimeseries.t * 1000,
+      open: parsedTimeseries[modeType],
+      high: parsedTimeseries[modeType],
+      low: parsedTimeseries[modeType],
+      close: parsedTimeseries[modeType],
+      time: Date.now(),
     }
-    const { lastBar } = subscriptionItem
-    const nextBarTime = getNextBarTime(resolution)
     const bar = timeseries
     subscriptionItem.lastBar = bar
-    console.log({ bar, resolution, symbol, subscribeUID })
     await subscriptionItem.onRealtimeCallback(bar)
   }
 }
 
 export function subscribeOnStream(
-  symbolInfo,
-  resolution,
-  onRealtimeCallback,
-  subscribeUID,
-  onResetCacheNeededCallback,
+  symbolInfo: LibrarySymbolInfo,
+  resolution: Resolution,
+  onRealtimeCallback: (s: string) => void,
+  subscribeUID: string,
+  onResetCacheNeededCallback: (s: string) => void,
   lastDailyBar?: Bar
 ) {
   console.log('[subscribeOnStream1]', symbolInfo, resolution, subscribeUID, lastDailyBar, subscriptions)
@@ -121,14 +118,12 @@ export function subscribeOnStream(
         onRealtimeCallback,
         enabled: true,
         lastBar: lastDailyBar,
-        firstTime: true,
       })
       subscribeToReader(subscribeUID, symbol, resolution)
     } else if (!subscriptionItem.reader) {
       // already subscribed to reader
       subscriptionItem.onRealtimeCallback = onRealtimeCallback
       subscriptionItem.enabled = true
-      subscriptionItem.firstTime = true
       subscribeToReader(subscribeUID, symbol, resolution)
     }
   } catch (e) {
@@ -145,6 +140,5 @@ export async function unsubscribeFromStream(subscriberUID: string) {
   }
   await subscriptionItem.reader?.cancel()
   subscriptionItem.enabled = false
-  subscriptionItem.firstTime = false
   subscriptionItem.reader = undefined
 }
