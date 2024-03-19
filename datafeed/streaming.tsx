@@ -80,17 +80,22 @@ async function subscribeToReader(subscribeUID: string, symbol: string, resolutio
     }
     const rawTimeseries = new TextDecoder().decode(value).split('\n')
     console.log("streamingTimeseries", rawTimeseries)
-    const parsedTimeseries = JSON.parse(rawTimeseries[0])
-    const timeseries = {
-      open: parsedTimeseries[modeType],
-      high: parsedTimeseries[modeType],
-      low: parsedTimeseries[modeType],
-      close: parsedTimeseries[modeType],
-      time: Date.now(),
+    try {
+
+      const parsedTimeseries = JSON.parse(rawTimeseries[0])
+      const timeseries = {
+        open: parsedTimeseries[modeType],
+        high: parsedTimeseries[modeType],
+        low: parsedTimeseries[modeType],
+        close: parsedTimeseries[modeType],
+        time: Date.now(),
+      }
+      const bar = timeseries
+      subscriptionItem.lastBar = bar
+      await subscriptionItem.onRealtimeCallback(bar)
+    } catch (e) {
+      console.error('[subscribeToReader] error', rawTimeseries, e)
     }
-    const bar = timeseries
-    subscriptionItem.lastBar = bar
-    await subscriptionItem.onRealtimeCallback(bar)
   }
 }
 
