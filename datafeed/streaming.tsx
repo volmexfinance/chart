@@ -83,6 +83,10 @@ async function subscribeToReader(subscribeUID: string, symbol: string, resolutio
     try {
 
       const parsedTimeseries = JSON.parse(rawTimeseries[0])
+      if (parsedTimeseries.s) {
+        // {s:"1"}
+        continue;
+      }
       const timeseries = {
         open: parsedTimeseries[modeType],
         high: parsedTimeseries[modeType],
