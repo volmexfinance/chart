@@ -1,14 +1,19 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import {
   widget,
   ChartingLibraryWidgetOptions,
   IChartingLibraryWidget,
   ResolutionString,
   LanguageCode,
+  IPositionLineAdapter,
 } from './charting_library/charting_library'
 import Datafeed from './datafeed'
 import { isPerpsApp } from './datafeed/constants'
 
+export type ChartLine = {
+  price: number;
+  title: string;
+};
 interface ChartContainerProps extends ChartingLibraryWidgetOptions {
   symbol: ChartingLibraryWidgetOptions['symbol']
   interval: ChartingLibraryWidgetOptions['interval']
@@ -24,11 +29,14 @@ interface ChartContainerProps extends ChartingLibraryWidgetOptions {
   container: ChartingLibraryWidgetOptions['container']
   theme?: ChartingLibraryWidgetOptions['theme']
   defaultLines?: number
+  chartLines: ChartLine[];
 }
 
 export const TVChart: React.FC<Partial<ChartContainerProps>> = (props) => {
+  const { chartLines } = props
   const ref = useRef<HTMLDivElement>(null)
   const tvWidget = useRef<IChartingLibraryWidget | null>(null)
+  const [chartReady, setChartReady] = useState(false)
 
   useEffect(() => {
     const initWidget = () => {
@@ -106,6 +114,7 @@ export const TVChart: React.FC<Partial<ChartContainerProps>> = (props) => {
       if (tvWidget.current !== null) {
         tvWidget.current.remove()
         tvWidget.current = null
+        setChartReady(false)
       }
     }
   }, [])
@@ -113,6 +122,7 @@ export const TVChart: React.FC<Partial<ChartContainerProps>> = (props) => {
   useEffect(() => {
     if (tvWidget.current !== null) {
       tvWidget.current.onChartReady(() => {
+        setChartReady(true)
         const themeName = tvWidget.current!.getTheme()
         if (themeName.toLowerCase() === 'dark' && !props.darkMode) {
           tvWidget.current!.changeTheme('Light')
@@ -132,6 +142,42 @@ export const TVChart: React.FC<Partial<ChartContainerProps>> = (props) => {
     }
   }, [props.darkMode, props.symbol, props.interval, props.compareSymbols])
 
+  const drawLineOnChart = useCallback(
+    (title: string, price: number, color: string) => {
+      if (chartReady && tvWidget.current?.activeChart?.().dataReady(() => {})) {
+        const chart = tvWidget.current.activeChart()
+        const positionLine = chart.createPositionLine({ disableUndo: true })
+
+        return positionLine
+          .setText(title)
+          .setPrice(price)
+          .setQuantity('')
+          .setLineStyle(1)
+          .setLineLength(1)
+          .setBodyFont(`normal 12pt "Relative", sans-serif`)
+          .setBodyTextColor('#fff')
+          .setLineColor(color)
+          .setBodyBackgroundColor(color)
+          .setBodyBorderColor(color)
+      }
+    },
+    [chartReady]
+  )
+
+  useEffect(
+    function updateLines() {
+      const lines: (IPositionLineAdapter | undefined)[] = []
+      chartLines?.forEach((order) => {
+        lines.push(drawLineOnChart(order.title, order.price, '#3a3e5e'))
+      })
+      return () => {
+        lines.forEach((line) => line?.remove())
+      }
+    },
+    [chartLines, drawLineOnChart]
+  )
+  //TODO: add arrows when when user when long or short
+  // TODO: update update lines to should when u
   return <div className="h-full w-full" ref={ref} />
 }
 
