@@ -6,6 +6,7 @@ import { getAllSymbols } from './symbols'
 import type { Resolution, SymbolInfo } from './types'
 
 const lastBarsCache = new Map()
+window.lastBarsCache = lastBarsCache
 
 const configurationData = {
   supported_resolutions: ['1', '5', '15', '60', '1D'],
