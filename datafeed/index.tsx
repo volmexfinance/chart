@@ -144,6 +144,21 @@ class TradingViewDatafeed {
         console.log('[getBars]: Get error', error)
         onErrorCallback(error)
       }
+    } else if (symbolInfo.name.indexOf('VBR') == 1) {
+      try {
+        const bars = await api.getVBRKlines(symbolInfo, resolution, from, to)
+        if (firstDataRequest) {
+          lastBarsCache.set(symbolInfo.full_name, {
+            ...bars[bars.length - 1],
+          })
+        }
+
+        onHistoryCallback(bars, { noData: bars.length === 0 ? true : false })
+        console.log(`[getBars]: returned ${bars.length} bar(s)`)
+      } catch (error) {
+        console.log('[getBars]: Get error', error)
+        onErrorCallback(error)
+      }
     } else if (exchange === 'VolmexPerps') {
       const bars = await api.getPerpKlines(symbolInfo, resolution, from, to)
       if (firstDataRequest) {

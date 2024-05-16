@@ -139,6 +139,86 @@ export function getAllSymbols() {
       },
     ]
   }
+/*
+Also the naming convention it’s:  EVBR1W - Ethereum Volmex Basis Rate Index (1 Week)
+Here are all the types of parameters to send to the history endpoint:
+dte0007: Annualized implied rate of basis at 7-day maturity. Floating number
+dte0014: Annualized implied rate of basis at 14-day maturity. Floating number
+dte0030: Annualized implied rate of basis at 30-day maturity. Floating number
+dte0060: Annualized implied rate of basis at 60-day maturity. Floating number
+dte0090: Annualized implied rate of basis at 90-day maturity. Floating number
+dte0120: Annualized implied rate of basis at 120-day maturity. Floating number
+dte0180: Annualized implied rate of basis at 180-day maturity. Floating number
+dte0270: Annualized implied rate of basis at 270-day maturity. Floating number
+dte0360: Annualized implied rate of basis at 360-day maturity. Floating number
+*/
+  const getVolmexSymbolsVBR = (baseSymbol: string, name: string) => {
+    return [
+      {
+        symbol: baseSymbol + 'VBR1W',
+        full_name: baseSymbol + 'VBR1W',
+        description: `${name} Volmex Basis Rate Index (1 Week)`,
+        exchange: 'Volmex',
+        type: 'crypto',
+      },
+      {
+        symbol: baseSymbol + 'VBR2W',
+        full_name: baseSymbol + 'VBR2W',
+        description: `${name} Volmex Basis Rate Index (2 Week)`,
+        exchange: 'Volmex',
+        type: 'crypto',
+      },
+      {
+        symbol: baseSymbol + 'VBR1M',
+        full_name: baseSymbol + 'VBR1M',
+        description: `${name} Volmex Basis Rate Index (1 Month)`,
+        exchange: 'Volmex',
+        type: 'crypto',
+      },
+      {
+        symbol: baseSymbol + 'VBR2M',
+        full_name: baseSymbol + 'VBR2M',
+        description: `${name} Volmex Basis Rate Index (2 Month)`,
+        exchange: 'Volmex',
+        type: 'crypto',
+      },
+      {
+        symbol: baseSymbol + 'VBR3M',
+        full_name: baseSymbol + 'VBR3M',
+        description: `${name} Volmex Basis Rate Index (3 Month)`,
+        exchange: 'Volmex',
+        type: 'crypto',
+      },
+      {
+        symbol: baseSymbol + 'VBR4M',
+        full_name: baseSymbol + 'VBR4M',
+        description: `${name} Volmex Basis Rate Index (4 Month)`,
+        exchange: 'Volmex',
+        type: 'crypto',
+      },
+      {
+        symbol: baseSymbol + 'VBR6M',
+        full_name: baseSymbol + 'VBR6M',
+        description: `${name} Volmex Basis Rate Index (6 Month)`,
+        exchange: 'Volmex',
+        type: 'crypto',
+      },
+      {
+        symbol: baseSymbol + 'VBR9M',
+        full_name: baseSymbol + 'VBR9M',
+        description: `${name} Volmex Basis Rate Index (9 Month)`,
+        exchange: 'Volmex',
+        type: 'crypto',
+      },
+      {
+        symbol: baseSymbol + 'VBR1Y',
+        full_name: baseSymbol + 'VBR1Y',
+        description: `${name} Volmex Basis Rate Index (1 Year)`,
+        exchange: 'Volmex',
+        type: 'crypto',
+      },
+    ]
+  }
   const getVolmexSymbolsFromIndex = (index: { symbol: string; name: string }, features: Array<string>) => {
     const baseSymbol = index.symbol === 'ETH' ? 'E' : index.symbol === 'BTC' ? 'B' : index.symbol
     const volmexSymbolIV = getVolmexSymbolIV(baseSymbol, index.name)
@@ -189,7 +269,7 @@ export function getAllSymbols() {
         }
       })
   }
-  console.log({ volmexSymbols })
+
   const extraSymbols = generateIndexPriceSymbols()
   const generateTVIVSymbol = () => {
     return {
@@ -211,5 +291,11 @@ export function getAllSymbols() {
     }
   }
 
-  return volmexSymbols.concat(extraSymbols).concat(generateTVIVSymbol()).concat(generateMVIVSymbol())
+  const generateVBRSymbols = () => {
+    return [
+      ...getVolmexSymbolsVBR('E', 'Ethereum'),
+      ...getVolmexSymbolsVBR('B', 'Bitcoin'),
+    ]
+  }
+  return volmexSymbols.concat(extraSymbols).concat(generateTVIVSymbol()).concat(generateMVIVSymbol()).concat(generateVBRSymbols())
 }
