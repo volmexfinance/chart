@@ -63,5 +63,5 @@ export enum ChainId {
     ArbitrumNova = 42170,
     MantleTestnet = 5001,
     ArbitrumSepolia = 421614,
-  
+    VolmexTestnet = 48124,
   }
