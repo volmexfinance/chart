@@ -558,9 +558,9 @@ const api: {
   getVolmexKlines: middleware(getVolmexKlines),
   getCryptoCompareKlines: getCryptoCompareKlines,
   getPerpKlines: middleware(getPerpKlines),
-  getTVIVKlines: middleware(getVolmexTVIVKlines),
   getMVIVKlines: middleware(getVolmexMVIVKlines),
-  getDVIVKlines: middleware(getVolmexDVIVKlines),
+  // getTVIVKlines: middleware(getVolmexTVIVKlines),
+  // getDVIVKlines: middleware(getVolmexDVIVKlines),
 }
 
 export default api

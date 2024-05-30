@@ -223,7 +223,7 @@ export function getAllSymbols() {
 
   return volmexSymbols
     .concat(extraSymbols)
-    .concat(generateTVIVSymbol())
     .concat(generateMVIVSymbol())
-    .concat(generateDVIVSymbol())
+    // .concat(generateTVIVSymbol())
+    // .concat(generateDVIVSymbol())
 }
