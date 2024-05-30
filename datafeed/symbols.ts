@@ -1,31 +1,31 @@
 export function getAllSymbols() {
   // const indexAssets = getTokenList('index', 80001)
   const indexAssets = [
-    { symbol: 'ETH', name: 'Ethereum', onlyRVandRP: false },
-    { symbol: 'BTC', name: 'Bitcoin', onlyRVandRP: false },
-    { symbol: 'BNB', name: 'Binance', onlyRVandRP: true },
-    { symbol: 'XRP', name: 'XRP', onlyRVandRP: true },
-    { symbol: 'ADA', name: 'Cardano', onlyRVandRP: true },
-    { symbol: 'DOGE', name: 'Dogecoin', onlyRVandRP: true },
-    { symbol: 'MATIC', name: 'Polygon', onlyRVandRP: true },
-    { symbol: 'OKB', name: 'OKB', onlyRVandRP: true },
-    { symbol: 'SOL', name: 'SOL', onlyRVandRP: true },
-    { symbol: 'SHIB', name: 'Shiba Inu', onlyRVandRP: true },
-    { symbol: 'DOT', name: 'Polkadot', onlyRVandRP: true },
-    { symbol: 'LTC', name: 'Litecoin', onlyRVandRP: true },
-    { symbol: 'TRX', name: 'Tron', onlyRVandRP: true },
-    { symbol: 'AVAX', name: 'Avalanche', onlyRVandRP: true },
-    { symbol: 'UNI', name: 'Uniswap', onlyRVandRP: true },
-    { symbol: 'ATOM', name: 'Cosmos', onlyRVandRP: true },
-    { symbol: 'TON', name: 'Toncoin', onlyRVandRP: true },
-    { symbol: 'LINK', name: 'Chainlink', onlyRVandRP: true },
-    { symbol: 'LEO', name: 'LEO', onlyRVandRP: true },
-    { symbol: 'XMR', name: 'Monero', onlyRVandRP: true },
-    { symbol: 'ETC', name: 'Ethereum Classic', onlyRVandRP: true },
-    { symbol: 'BCH', name: 'Bitcoin Cash', onlyRVandRP: true },
-    { symbol: 'APT', name: 'Aptos', onlyRVandRP: true },
-    { symbol: 'XLM', name: 'Stellar', onlyRVandRP: true },
-    { symbol: 'LDO', name: 'Lido', onlyRVandRP: true },
+    { symbol: 'ETH', name: 'Ethereum', features: ['VRP'] },
+    { symbol: 'BTC', name: 'Bitcoin', features: ['VRP'] },
+    { symbol: 'BNB', name: 'Binance', features: [] },
+    { symbol: 'XRP', name: 'XRP', features: [] },
+    { symbol: 'ADA', name: 'Cardano', features: [] },
+    { symbol: 'DOGE', name: 'Dogecoin', features: [] },
+    { symbol: 'MATIC', name: 'Polygon', features: [] },
+    { symbol: 'OKB', name: 'OKB', features: [] },
+    { symbol: 'SOL', name: 'SOL', features: [] },
+    { symbol: 'SHIB', name: 'Shiba Inu', features: [] },
+    { symbol: 'DOT', name: 'Polkadot', features: [] },
+    { symbol: 'LTC', name: 'Litecoin', features: [] },
+    { symbol: 'TRX', name: 'Tron', features: [] },
+    { symbol: 'AVAX', name: 'Avalanche', features: [] },
+    { symbol: 'UNI', name: 'Uniswap', features: [] },
+    { symbol: 'ATOM', name: 'Cosmos', features: [] },
+    { symbol: 'TON', name: 'Toncoin', features: [] },
+    { symbol: 'LINK', name: 'Chainlink', features: [] },
+    { symbol: 'LEO', name: 'LEO', features: [] },
+    { symbol: 'XMR', name: 'Monero', features: [] },
+    { symbol: 'ETC', name: 'Ethereum Classic', features: [] },
+    { symbol: 'BCH', name: 'Bitcoin Cash', features: [] },
+    { symbol: 'APT', name: 'Aptos', features: [] },
+    { symbol: 'XLM', name: 'Stellar', features: [] },
+    { symbol: 'LDO', name: 'Lido', features: [] },
   ]
   const symbolList = [
     'BTC',
@@ -139,11 +139,91 @@ export function getAllSymbols() {
       },
     ]
   }
-  const getVolmexSymbolsFromIndex = (index: { symbol: string; name: string }, onlyRVandRP: boolean) => {
+  /*
+Also the naming convention it’s:  EVBR1W - Ethereum Volmex Basis Rate Index (1 Week)
+Here are all the types of parameters to send to the history endpoint:
+dte0007: Annualized implied rate of basis at 7-day maturity. Floating number
+dte0014: Annualized implied rate of basis at 14-day maturity. Floating number
+dte0030: Annualized implied rate of basis at 30-day maturity. Floating number
+dte0060: Annualized implied rate of basis at 60-day maturity. Floating number
+dte0090: Annualized implied rate of basis at 90-day maturity. Floating number
+dte0120: Annualized implied rate of basis at 120-day maturity. Floating number
+dte0180: Annualized implied rate of basis at 180-day maturity. Floating number
+dte0270: Annualized implied rate of basis at 270-day maturity. Floating number
+dte0360: Annualized implied rate of basis at 360-day maturity. Floating number
+*/
+  const getVolmexSymbolsVBR = (baseSymbol: string, name: string) => {
+    return [
+      {
+        symbol: baseSymbol + 'VBR1W',
+        full_name: baseSymbol + 'VBR1W',
+        description: `${name} Volmex Basis Rate Index (1 Week)`,
+        exchange: 'Volmex',
+        type: 'crypto',
+      },
+      {
+        symbol: baseSymbol + 'VBR2W',
+        full_name: baseSymbol + 'VBR2W',
+        description: `${name} Volmex Basis Rate Index (2 Week)`,
+        exchange: 'Volmex',
+        type: 'crypto',
+      },
+      {
+        symbol: baseSymbol + 'VBR1M',
+        full_name: baseSymbol + 'VBR1M',
+        description: `${name} Volmex Basis Rate Index (1 Month)`,
+        exchange: 'Volmex',
+        type: 'crypto',
+      },
+      {
+        symbol: baseSymbol + 'VBR2M',
+        full_name: baseSymbol + 'VBR2M',
+        description: `${name} Volmex Basis Rate Index (2 Month)`,
+        exchange: 'Volmex',
+        type: 'crypto',
+      },
+      {
+        symbol: baseSymbol + 'VBR3M',
+        full_name: baseSymbol + 'VBR3M',
+        description: `${name} Volmex Basis Rate Index (3 Month)`,
+        exchange: 'Volmex',
+        type: 'crypto',
+      },
+      {
+        symbol: baseSymbol + 'VBR4M',
+        full_name: baseSymbol + 'VBR4M',
+        description: `${name} Volmex Basis Rate Index (4 Month)`,
+        exchange: 'Volmex',
+        type: 'crypto',
+      },
+      {
+        symbol: baseSymbol + 'VBR6M',
+        full_name: baseSymbol + 'VBR6M',
+        description: `${name} Volmex Basis Rate Index (6 Month)`,
+        exchange: 'Volmex',
+        type: 'crypto',
+      },
+      {
+        symbol: baseSymbol + 'VBR9M',
+        full_name: baseSymbol + 'VBR9M',
+        description: `${name} Volmex Basis Rate Index (9 Month)`,
+        exchange: 'Volmex',
+        type: 'crypto',
+      },
+      {
+        symbol: baseSymbol + 'VBR1Y',
+        full_name: baseSymbol + 'VBR1Y',
+        description: `${name} Volmex Basis Rate Index (1 Year)`,
+        exchange: 'Volmex',
+        type: 'crypto',
+      },
+    ]
+  }
+  const getVolmexSymbolsFromIndex = (index: { symbol: string; name: string }, features: Array<string>) => {
     const baseSymbol = index.symbol === 'ETH' ? 'E' : index.symbol === 'BTC' ? 'B' : index.symbol
     const volmexSymbolIV = getVolmexSymbolIV(baseSymbol, index.name)
     const volmexSymbolsRV = getVolmexSymbolsRV(baseSymbol, index.name)
-    // const volmexSymbolRP = getVolmexSymbolRP(baseSymbol, index.name)
+    const volmexSymbolRP = getVolmexSymbolRP(baseSymbol, index.name)
     const volmexSymbolsVCORR = getVolmexSymbolsVCORR(baseSymbol, index.name)
 
     const volmexSymbolsPerps: any[] = [] /*indexAssets.map((index) => ({
@@ -153,12 +233,12 @@ export function getAllSymbols() {
         exchange: 'VolmexPerps',
         type: 'crypto',
       }))*/
+    const symbols = [volmexSymbolIV, ...volmexSymbolsRV, ...volmexSymbolsVCORR]
 
-    if (onlyRVandRP) {
-      return [...volmexSymbolsRV] //[...volmexSymbolsRV, volmexSymbolRP]
-    } else {
-      return [volmexSymbolIV, ...volmexSymbolsRV, ...volmexSymbolsVCORR] //[volmexSymbolIV, ...volmexSymbolsRV, volmexSymbolRP, ...volmexSymbolsVCORR] //,...volmexSymbolsPerps]
+    if (features.includes('VRP')) {
+      symbols.push(volmexSymbolRP)
     }
+    return symbols
   }
 
   const volmexSymbols = indexAssets.reduce<
@@ -170,7 +250,7 @@ export function getAllSymbols() {
       type: string
     }>
   >((acc, index) => {
-    const volmexSymbols = getVolmexSymbolsFromIndex(index, index.onlyRVandRP)
+    const volmexSymbols = getVolmexSymbolsFromIndex(index, index.features)
     acc.push(...volmexSymbols)
     return acc
   }, [])
@@ -189,7 +269,7 @@ export function getAllSymbols() {
         }
       })
   }
-  console.log({ volmexSymbols })
+
   const extraSymbols = generateIndexPriceSymbols()
   const generateTVIVSymbol = () => {
     return {
@@ -220,10 +300,13 @@ export function getAllSymbols() {
       type: 'crypto',
     }
   }
-
+  const generateVBRSymbols = () => {
+    return [...getVolmexSymbolsVBR('E', 'Ethereum'), ...getVolmexSymbolsVBR('B', 'Bitcoin')]
+  }
   return volmexSymbols
     .concat(extraSymbols)
-    .concat(generateMVIVSymbol())
     // .concat(generateTVIVSymbol())
-    // .concat(generateDVIVSymbol())
+    .concat(generateMVIVSymbol())
+    .concat(generateVBRSymbols())
+  // .concat(generateDVIVSymbol())
 }

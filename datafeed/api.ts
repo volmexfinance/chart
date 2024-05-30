@@ -418,6 +418,65 @@ async function getVolmexMVIVKlines(_: SymbolInfo, resolution: Resolution, from: 
   return bars
 }
 
+async function getVolmexVBRKlines(symbolInfo: SymbolInfo, resolution: Resolution, from: number, to: number): Promise<Bar[]> {
+  // const { calculateBack3Days, calculateBack40Days, calculateBack1000Days, resolutionToInterval } = volmexHelpers()
+  const urlString = `${apiBaseUrl}/public/basis_rate/history`
+  const resolutionToInterval = {
+    '1': '1',
+    '5': '5',
+    '15': '15',
+    '60': '60',
+    '240': '60',
+    '1D': 'D',
+    // ''
+  }
+  const baseAssetName = symbolInfo.name.split('/')[0] == 'E' ? 'ETH' : 'BTC'
+
+  const maturity = symbolInfo.name[symbolInfo.name.length - 2] + symbolInfo.name[symbolInfo.name.length - 1]
+  
+  const maturityToMaturityKey = {
+    "1W": "dte0007",
+    "2W": "dte0014",
+    "1M": "dte0030",
+    "2M": "dte0060",
+    "3M": "dte0090",
+    "4M": "dte0120",
+    "6M": "dte0180",
+    "9M": "dte0270",
+    "1Y": "dte0360",
+  }
+
+  const url = new URL(urlString)
+  url.searchParams.append('type', maturityToMaturityKey[maturity])
+  url.searchParams.append('symbol', baseAssetName)
+  url.searchParams.append('resolution', resolutionToInterval[resolution]) // 1, 5, 15, 30, 60
+  url.searchParams.append(
+    'from',
+    from.toString()
+  )
+  url.searchParams.append('to', String(to))
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'content-type': 'application/json',
+    },
+  })
+  const data = await response.json()
+
+  const bars = data.t.map((timestamp: any, i: number) => {
+    return {
+      time: timestamp * 1000,
+      low: data.l[i],
+      high: data.h[i],
+      open: data.o[i],
+      close: data.c[i],
+      volume: data.v[i],
+    }
+  })
+
+  return bars
+}
+
 async function getCryptoCompareKlines(
   symbolInfo: SymbolInfo,
   resolution: Resolution,
@@ -561,6 +620,7 @@ const api: {
   getMVIVKlines: middleware(getVolmexMVIVKlines),
   // getTVIVKlines: middleware(getVolmexTVIVKlines),
   // getDVIVKlines: middleware(getVolmexDVIVKlines),
+  getVBRKlines: middleware(getVolmexVBRKlines),
 }
 
 export default api
