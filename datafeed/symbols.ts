@@ -224,7 +224,11 @@ dte0360: Annualized implied rate of basis at 360-day maturity. Floating number
     const volmexSymbolIV = getVolmexSymbolIV(baseSymbol, index.name)
     const volmexSymbolsRV = getVolmexSymbolsRV(baseSymbol, index.name)
     const volmexSymbolRP = getVolmexSymbolRP(baseSymbol, index.name)
-    const volmexSymbolsVCORR = getVolmexSymbolsVCORR(baseSymbol, index.name)
+    // const volmexSymbolRP = getVolmexSymbolRP(baseSymbol, index.name)
+    let volmexSymbolsVCORR = []
+    if (index.symbol === 'ETH' || index.symbol === 'BTC') {
+      volmexSymbolsVCORR = getVolmexSymbolsVCORR(baseSymbol, index.name)
+    }
 
     const volmexSymbolsPerps: any[] = [] /*indexAssets.map((index) => ({
         symbol: index.symbol,
