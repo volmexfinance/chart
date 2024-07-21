@@ -208,6 +208,6 @@ export class TVChart extends React.PureComponent<Partial<ChartContainerProps>, C
   }
 
   public render(): JSX.Element {
-    return <div className="h-full w-full" ref={this.ref} />
+    return <div className="h-full w-full bg-black" ref={this.ref} />
   }
 }
