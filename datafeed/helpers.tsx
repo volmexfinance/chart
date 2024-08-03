@@ -61,6 +61,8 @@ export const getChainIdRelayer = (chainId: ChainId) => {
       return 'ZKSYNC'
     case ChainId.VolmexTestnet:
       return 'VOT'
+    case ChainId.VolmexTestnet2:
+      return 'VOT2'
     default:
       console.error('getChainIdRelayer: Unsupported chainId:', chainId)
       return 'ARB'

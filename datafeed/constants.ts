@@ -10,15 +10,15 @@ export const isPerpsApp = () => {
 }
 
 export const getPerpsTokenAddr = (
-  chainId: ChainId.VolmexTestnet | ChainId.ArbitrumSepolia | ChainId.BaseSepolia,
+  chainId: ChainId.VolmexTestnet2 | ChainId.ArbitrumSepolia | ChainId.BaseSepolia,
   symbol: 'EVIV' | 'BVIV' | 'ETH' | 'BTC'
 ) => {
   return {
-    [ChainId.VolmexTestnet]: {
-      EVIV: process.env.REACT_APP_VOLMEX_EVIV!,
-      BVIV: process.env.REACT_APP_VOLMEX_BVIV!, // TODO: remove with BTC base token address
-      ETH: process.env.REACT_APP_VOLMEX_ETHUSD!,
-      BTC: process.env.REACT_APP_VOLMEX_BTCUSD!,
+    [ChainId.VolmexTestnet2]: {
+      EVIV: process.env.REACT_APP_VOLMEX2_EVIV!,
+      BVIV: process.env.REACT_APP_VOLMEX2_BVIV!, // TODO: remove with BTC base token address
+      ETH: process.env.REACT_APP_VOLMEX2_ETHUSD!,
+      BTC: process.env.REACT_APP_VOLMEX2_BTCUSD!,
     },
     [ChainId.ArbitrumSepolia]: {
       EVIV: process.env.REACT_APP_ARBITRUM_EVIV!,
