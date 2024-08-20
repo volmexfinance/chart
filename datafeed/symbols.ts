@@ -9,7 +9,7 @@ export function getAllSymbols() {
     { symbol: 'DOGE', name: 'Dogecoin', features: [] },
     { symbol: 'MATIC', name: 'Polygon', features: [] },
     { symbol: 'OKB', name: 'OKB', features: [] },
-    { symbol: 'SOL', name: 'SOL', features: [] },
+    { symbol: 'SOL', name: 'Solana', features: [] },
     { symbol: 'SHIB', name: 'Shiba Inu', features: [] },
     { symbol: 'DOT', name: 'Polkadot', features: [] },
     { symbol: 'LTC', name: 'Litecoin', features: [] },
@@ -262,7 +262,7 @@ dte0360: Annualized implied rate of basis at 360-day maturity. Floating number
   const generateIndexPriceSymbols = () => {
     // Only show ETH and BTC index price
     return indexAssets
-      .filter((i) => i.symbol == 'ETH' || i.symbol == 'BTC')
+      .filter((i) => i.symbol == 'ETH' || i.symbol == 'BTC'  || i.symbol == 'SOL')
       .map((i) => {
         return {
           symbol: i.symbol + '/USD',
@@ -304,6 +304,17 @@ dte0360: Annualized implied rate of basis at 360-day maturity. Floating number
       type: 'crypto',
     }
   }
+  
+  const generateSVIVSymbol = () => {
+    return {
+      symbol: 'SVIV',
+      full_name: 'SVIV',
+      description: `Solana Volmex Implied Volatility Index`,
+      exchange: 'Volmex',
+      type: 'crypto',
+    }
+  }
+
   const generateVBRSymbols = () => {
     return [...getVolmexSymbolsVBR('E', 'Ethereum'), ...getVolmexSymbolsVBR('B', 'Bitcoin')]
   }
@@ -312,5 +323,6 @@ dte0360: Annualized implied rate of basis at 360-day maturity. Floating number
     // .concat(generateTVIVSymbol())
     .concat(generateMVIVSymbol())
     .concat(generateVBRSymbols())
-  // .concat(generateDVIVSymbol())
+    // .concat(generateDVIVSymbol())
+    .concat(generateSVIVSymbol())
 }
