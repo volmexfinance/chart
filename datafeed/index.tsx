@@ -47,7 +47,7 @@ class TradingViewDatafeed {
   ) {
     const symbols = await getAllSymbols()
     console.log({ symbols })
-    const symbolItem = symbols.find(({ symbol }) => symbol === symbolName)
+    const symbolItem = symbols.find(({ symbol }) => symbol.toLowerCase() === symbolName.toLowerCase())
     console.log('[resolveSymbol]: Method call', symbolName, symbolItem?.exchange)
     if (!symbolItem) {
       console.log('[resolveSymbol]: Cannot resolve symbol', symbolName)

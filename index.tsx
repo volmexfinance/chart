@@ -138,6 +138,14 @@ export class TVChart extends React.PureComponent<Partial<ChartContainerProps>, C
           symbol: 'BVCORR1W',
           title: 'Volmex Bitcoin Spot Volatility 1 Week Correlation Index',
         },
+        {
+          symbol: 'BVBEAR',
+          title: 'Volmex Bitcoin Bull Index',
+        },
+        {
+          symbol: 'EVBEAR',
+          title: 'Volmex Ethereum Bear Index',
+        }
       ],
     }
 

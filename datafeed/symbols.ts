@@ -304,6 +304,40 @@ dte0360: Annualized implied rate of basis at 360-day maturity. Floating number
       type: 'crypto',
     }
   }
+
+  const generateBullBearSymbols = () => {
+    return [
+      {
+        symbol: 'BVBEAR',
+        full_name: 'BVBear',
+        description: `Bitcoin Volmex Bear (30-day) Implied Semi-volatility Index`,
+        exchange: 'Volmex',
+        type: 'crypto',
+      },
+      {
+        symbol: 'BVBULL',
+        full_name: 'BVBull',
+        description: `Bitcoin Volmex Bull (30-day) Implied Semi-volatility Index`,
+        exchange: 'Volmex',
+        type: 'crypto',
+      },
+      {
+        symbol: 'EVBEAR',
+        full_name: 'EVBear',
+        description: `Ethereum Volmex Bear (30-day) Implied Semi-volatility Index`,
+        exchange: 'Volmex',
+        type: 'crypto',
+      },
+      {
+        symbol: 'EVBULL',
+        full_name: 'EVBull',
+        description: `Ethereum Volmex Bull (30-day) Implied Semi-volatility Index`,
+        exchange: 'Volmex',
+        type: 'crypto',
+      }
+    ]
+  }
+
   const generateVBRSymbols = () => {
     return [...getVolmexSymbolsVBR('E', 'Ethereum'), ...getVolmexSymbolsVBR('B', 'Bitcoin')]
   }
@@ -313,4 +347,5 @@ dte0360: Annualized implied rate of basis at 360-day maturity. Floating number
     .concat(generateMVIVSymbol())
     .concat(generateVBRSymbols())
   // .concat(generateDVIVSymbol())
+    .concat(generateBullBearSymbols())
 }

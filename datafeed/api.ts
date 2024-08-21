@@ -89,6 +89,20 @@ async function getVolmexKlines(
   const urlParams = new URLSearchParams(window.location.search)
 
   const getUrlString = (symbolInfo: SymbolInfo) => {
+    if (symbolInfo.name.includes('VBEAR') || symbolInfo.name.includes('VBULL')) {
+      const url = new URL(`${apiBaseUrl}/public/semiiv/history`)
+      
+      const side = symbolInfo.name.includes('VBEAR') ? 'D' : 'U'
+      url.searchParams.append('side', side)
+      url.searchParams.append('term', '30')
+
+      if (symbolInfo.name[0] === 'E') {
+        url.searchParams.append('symbol', 'EVIV')
+      } else if (symbolInfo.name[0] === 'B') {
+        url.searchParams.append('symbol', 'BVIV')
+      }
+      return url.toString()
+    }
     if (symbolInfo.name.includes('VIV')) {
       const provider = urlParams.get('provider') || 'global'
       const url = new URL(`${apiBaseUrl}/public/iv/history?provider=${provider}`)
@@ -157,7 +171,7 @@ async function getVolmexKlines(
   const urlString = getUrlString(symbolInfo)
 
   const url = new URL(urlString)
-  url.searchParams.append('resolution', resolutionToInterval[resolution]) // 1, 5, 15, 30, 60
+  url.searchParams.append('resolution', resolutionToInterval[resolution])
   url.searchParams.append(
     'from',
     from.toString()
