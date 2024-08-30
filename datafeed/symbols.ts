@@ -307,9 +307,9 @@ dte0360: Annualized implied rate of basis at 360-day maturity. Floating number
   
   const generateSVIVSymbol = () => {
     return {
-      symbol: 'SVIV',
-      full_name: 'SVIV',
-      description: `Solana Volmex Implied Volatility Index`,
+      symbol: 'SVIV14D',
+      full_name: 'SVIV14D',
+      description: `Solana Volmex Implied Volatility Index (14-day)`,
       exchange: 'Volmex',
       type: 'crypto',
     }
