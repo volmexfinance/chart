@@ -338,6 +338,10 @@ dte0360: Annualized implied rate of basis at 360-day maturity. Floating number
     }
   }
 
+  // disable blue and green in volmex.finance domain
+  if (window.location.hostname.includes('volmex.finance')) {
+    return generateAllSymbolsPerEnv()
+  }
   return generateAllSymbolsPerEnv()
     .concat(generateAllSymbolsPerEnv('blue'))
     .concat(generateAllSymbolsPerEnv('green'))
