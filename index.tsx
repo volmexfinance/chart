@@ -87,7 +87,7 @@ export class TVChart extends React.PureComponent<Partial<ChartContainerProps>, C
       fullscreen: this.props.fullscreen,
       toolbar_bg: 'transparent',
       autosize: this.props.autosize,
-      studies_overrides: this.props.studiesOverrides,
+      studies_overrides: {...this.props.studiesOverrides},
       overrides: {
         // "mainSeriesProperties.showCountdown": true,
         'paneProperties.background': this.props.darkMode ? 'rgba(17, 24, 39, 1)' : 'rgb(249, 250, 251)',
@@ -103,7 +103,11 @@ export class TVChart extends React.PureComponent<Partial<ChartContainerProps>, C
         'mainSeriesProperties.candleStyle.borderUpColor': 'rgb(51,215,120)',
         'paneProperties.legendProperties.showSeriesTitle': false,
         'scalesProperties.showSymbolLabels': true,
+        // 'scalesProperties.percentage': false, // Disable percentage mode
       },
+      priceScale: {
+        mode: 2, // 1 is for normal price scale (no percentage toggle)
+    },
       custom_css_url: '../tvcharts.css',
       compare_symbols: [
         {
@@ -146,13 +150,15 @@ export class TVChart extends React.PureComponent<Partial<ChartContainerProps>, C
     // set chart type to area
 
     tvWidget.onChartReady(() => {
-      tvWidget.headerReady().then(() => {
+      tvWidget.headerReady().then(async () => {
         tvWidget.chart().setChartType(3)
         if (this.props.compareSymbols !== undefined) {
           for (const symbol of this.props.compareSymbols) {
-            tvWidget.chart().createStudy('Compare', true, false, ['open', symbol])
+            await tvWidget.chart().createStudy('Compare', true, false, ['open', symbol],)
           }
           tvWidget.chart().applyOverrides({ 'scalesProperties.showSymbolLabels': true })
+          const priceScale = tvWidget.chart().getPanes()[0].getRightPriceScales()[0];
+          priceScale.setMode(0);
         }
 
         this.tvWidget = tvWidget
