@@ -1,7 +1,7 @@
 import { RestApiEnvironment } from "./types"
 
 const apiBaseUrl =
-  typeof window !== `undefined` && window.location.hostname.includes('volmex.finance') || window.location.hostname.includes('monitoring')
+  typeof window !== `undefined` && window.location.hostname.includes('volmex.finance') || window.location.hostname.includes('monitor')
     ? 'https://rest-v1.volmex.finance'
     : 'https://test-api.volmex.finance'
 
