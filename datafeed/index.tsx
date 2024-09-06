@@ -46,7 +46,7 @@ class TradingViewDatafeed {
     onResolveErrorCallback: (s: any) => void
   ) {
     const symbols = await getAllSymbols()
-    console.log({ symbols })
+    console.log({ symbolName, symbols })
     const symbolItem = symbols.find(({ symbol }) => symbol === symbolName)
     console.log('[resolveSymbol]: Method call', symbolName, symbolItem?.exchange)
     if (!symbolItem) {
@@ -114,7 +114,7 @@ class TradingViewDatafeed {
       return
     }
 
-    if (symbolInfo.name === 'TVIV') {
+    if (symbolInfo.name.includes('TVIV')) {
       try {
         const bars = await api.getTVIVKlines(symbolInfo, resolution, from, to)
         if (firstDataRequest) {
@@ -129,7 +129,7 @@ class TradingViewDatafeed {
         console.log('[getBars]: Get error', error)
         onErrorCallback(error)
       }
-    } else if (symbolInfo.name === 'DVIV') {
+    } else if (symbolInfo.name.includes('DVIV')) {
       try {
         const bars = await api.getDVIVKlines(symbolInfo, resolution, from, to)
         if (firstDataRequest) {
@@ -144,7 +144,7 @@ class TradingViewDatafeed {
         console.log('[getBars]: Get error', error)
         onErrorCallback(error)
       }
-    } else if (symbolInfo.name === 'MVIV') {
+    } else if (symbolInfo.name.includes('MVIV')) {
       try {
         const bars = await api.getMVIVKlines(symbolInfo, resolution, from, to)
         if (firstDataRequest) {

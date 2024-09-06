@@ -14,3 +14,6 @@ export type Bar = {
   close: number
   volume: number
 }
+
+
+export type RestApiEnvironment = 'blue' | 'green'

@@ -1,3 +1,5 @@
+import { RestApiEnvironment } from "./types"
+
 export function getAllSymbols() {
   // const indexAssets = getTokenList('index', 80001)
   const indexAssets = [
@@ -318,11 +320,25 @@ dte0360: Annualized implied rate of basis at 360-day maturity. Floating number
   const generateVBRSymbols = () => {
     return [...getVolmexSymbolsVBR('E', 'Ethereum'), ...getVolmexSymbolsVBR('B', 'Bitcoin')]
   }
-  return volmexSymbols
+
+
+  const generateAllSymbolsPerEnv = (env?: RestApiEnvironment) => {
+    const allVolmexSymbols = volmexSymbols
     .concat(extraSymbols)
     // .concat(generateTVIVSymbol())
     .concat(generateMVIVSymbol())
     .concat(generateVBRSymbols())
     // .concat(generateDVIVSymbol())
     .concat(generateSVIVSymbol())
+
+    if (env) {
+      return allVolmexSymbols.map((s) => ({...s, symbol: s.symbol + '-' + env, full_name: s.full_name + '-' + env,  }))
+    } else {
+      return allVolmexSymbols
+    }
+  }
+
+  return generateAllSymbolsPerEnv()
+    .concat(generateAllSymbolsPerEnv('blue'))
+    .concat(generateAllSymbolsPerEnv('green'))
 }

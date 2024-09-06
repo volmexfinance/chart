@@ -1,5 +1,6 @@
-import { apiBaseUrl } from './constants'
-import type { Bar, Resolution, SymbolInfo } from './types'
+import { getApiBaseUrlWithRestApiEnvironment } from './constants'
+import { symbolInfoEnvironmentSelector } from './helpers'
+import type { Bar, Resolution, RestApiEnvironment, SymbolInfo } from './types'
 
 function volmexHelpers() {
   const calculateBack3Days = (to: number) => {
@@ -37,7 +38,8 @@ async function getVolmexKlines(
   symbolInfo: SymbolInfo,
   resolution: Resolution,
   from: number,
-  to: number
+  to: number,
+  env?: RestApiEnvironment
 ): Promise<Bar[]> {
   var split_symbol = symbolInfo.name.split(/[:/]/)
   const resolutionToInterval = {
@@ -91,7 +93,7 @@ async function getVolmexKlines(
   const getUrlString = (symbolInfo: SymbolInfo) => {
     if (symbolInfo.name.includes('VIV')) {
       const provider = urlParams.get('provider') || 'global'
-      const url = new URL(`${apiBaseUrl}/public/iv/history?provider=${provider}`)
+      const url = new URL(`${getApiBaseUrlWithRestApiEnvironment(env)}/public/iv/history?provider=${provider}`)
       if (symbolInfo.name == 'SVIV14D') {
         url.searchParams.append('term', '14') // TODO: have to add term=14 because the default is 30, and we don't have any data for SVIV 30 day implied VOL
         url.searchParams.append('symbol', 'SVIV')
@@ -100,7 +102,7 @@ async function getVolmexKlines(
       }
       return url.toString()
     } else if (symbolInfo.name.includes('VRV')) {
-      const url = new URL(`${apiBaseUrl}/public/rv/history`)
+      const url = new URL(`${getApiBaseUrlWithRestApiEnvironment(env)}/public/rv/history`)
       url.searchParams.append('symbol', getBaseSymbol(symbolInfo))
       if (symbolInfo.name.includes('VRV1D')) {
         url.searchParams.append('type', 'rv_01')
@@ -124,12 +126,12 @@ async function getVolmexKlines(
       }
       return url.toString()
     } else if (symbolInfo.name.includes('VRP')) {
-      const url = new URL(`${apiBaseUrl}/public/rv/history`)
+      const url = new URL(`${getApiBaseUrlWithRestApiEnvironment(env)}/public/rv/history`)
       url.searchParams.append('type', 'vrp')
       url.searchParams.append('symbol', getBaseSymbol(symbolInfo))
       return url.toString()
     } else if (symbolInfo.name.includes('VCORR')) {
-      const url = new URL(`${apiBaseUrl}/public/vcorr/history`)
+      const url = new URL(`${getApiBaseUrlWithRestApiEnvironment(env)}/public/vcorr/history`)
       if (symbolInfo.name.includes('VCORR3D')) {
         url.searchParams.append('type', 'vcorr_03d01h')
         url.searchParams.append('symbol', getBaseSymbol(symbolInfo))
@@ -157,7 +159,7 @@ async function getVolmexKlines(
       console.error('Unknown symbolInfo.name', symbolInfo.name)
     }
     // error default
-    return `${apiBaseUrl}/public/iv/history`
+    return `${getApiBaseUrlWithRestApiEnvironment(env)}/public/iv/history`
   }
   const urlString = getUrlString(symbolInfo)
 
@@ -199,7 +201,7 @@ async function getVolmexKlines(
   return bars
 }
 
-async function getPerpKlines(symbolInfo: SymbolInfo, resolution: Resolution, from: number, to: number): Promise<Bar[]> {
+async function getPerpKlines(symbolInfo: SymbolInfo, resolution: Resolution, from: number, to: number, env?: RestApiEnvironment): Promise<Bar[]> {
   var split_symbol = symbolInfo.name.split(/[:/]/)
   const symbolToBaseToken: { [index: string]: string } = {
     ETH: '0x24bf203aaf9afb0d4fc03001a368ceab11b92d93',
@@ -270,9 +272,9 @@ async function getPerpKlines(symbolInfo: SymbolInfo, resolution: Resolution, fro
   return bars
 }
 
-async function getVolmexTVIVKlines(_: SymbolInfo, resolution: Resolution, from: number, to: number): Promise<Bar[]> {
+async function getVolmexTVIVKlines(_: SymbolInfo, resolution: Resolution, from: number, to: number, env?: RestApiEnvironment): Promise<Bar[]> {
   // const { calculateBack3Days, calculateBack40Days, calculateBack1000Days, resolutionToInterval } = volmexHelpers()
-  const urlString = `${apiBaseUrl}/public/tviv/history`
+  const urlString = `${getApiBaseUrlWithRestApiEnvironment(env)}/public/tviv/history`
   const resolutionToInterval = {
     '1': '1',
     '5': '5',
@@ -321,9 +323,9 @@ async function getVolmexTVIVKlines(_: SymbolInfo, resolution: Resolution, from: 
   return bars
 }
 
-async function getVolmexDVIVKlines(_: SymbolInfo, resolution: Resolution, from: number, to: number): Promise<Bar[]> {
+async function getVolmexDVIVKlines(_: SymbolInfo, resolution: Resolution, from: number, to: number, env?: RestApiEnvironment): Promise<Bar[]> {
   // const { calculateBack3Days, calculateBack40Days, calculateBack1000Days, resolutionToInterval } = volmexHelpers()
-  const urlString = `${apiBaseUrl}/public/dviv/history`
+  const urlString = `${getApiBaseUrlWithRestApiEnvironment(env)}/public/dviv/history`
   const resolutionToInterval = {
     '1': '1',
     '5': '5',
@@ -372,9 +374,9 @@ async function getVolmexDVIVKlines(_: SymbolInfo, resolution: Resolution, from: 
   return bars
 }
 
-async function getVolmexMVIVKlines(_: SymbolInfo, resolution: Resolution, from: number, to: number): Promise<Bar[]> {
+async function getVolmexMVIVKlines(_: SymbolInfo, resolution: Resolution, from: number, to: number, env?: RestApiEnvironment): Promise<Bar[]> {
   // const { calculateBack3Days, calculateBack40Days, calculateBack1000Days, resolutionToInterval } = volmexHelpers()
-  const urlString = `${apiBaseUrl}/public/mvivtviv/history`
+  const urlString = `${getApiBaseUrlWithRestApiEnvironment(env)}/public/mvivtviv/history`
   const resolutionToInterval = {
     '1': '1',
     '5': '5',
@@ -423,9 +425,9 @@ async function getVolmexMVIVKlines(_: SymbolInfo, resolution: Resolution, from: 
   return bars
 }
 
-async function getVolmexVBRKlines(symbolInfo: SymbolInfo, resolution: Resolution, from: number, to: number): Promise<Bar[]> {
+async function getVolmexVBRKlines(symbolInfo: SymbolInfo, resolution: Resolution, from: number, to: number, env?: RestApiEnvironment): Promise<Bar[]> {
   // const { calculateBack3Days, calculateBack40Days, calculateBack1000Days, resolutionToInterval } = volmexHelpers()
-  const urlString = `${apiBaseUrl}/public/basis_rate/history`
+  const urlString = `${getApiBaseUrlWithRestApiEnvironment(env)}/public/basis_rate/history`
   const resolutionToInterval = {
     '1': '1',
     '5': '5',
@@ -567,7 +569,7 @@ async function getCryptoCompareKlines(
   return bars
 }
 
-type FetchKlines = (symbolInfo: SymbolInfo, resolution: Resolution, from: number, to: number) => Promise<Bar[]>
+type FetchKlines = (symbolInfo: SymbolInfo, resolution: Resolution, from: number, to: number, env?: RestApiEnvironment) => Promise<Bar[]>
 
 function middleware(fetchKlines: FetchKlines): FetchKlines {
   const resolutionToInterval = {
@@ -584,7 +586,13 @@ function middleware(fetchKlines: FetchKlines): FetchKlines {
     // assumes that each fetch returns the bars closer on the `from` over the `to` range
     let deathspiral = 0
     let lastWasOnlyOne = false
-    const bars = await fetchKlines(symbolInfo, resolution, from, to)
+
+    const {
+      environment,
+      symbolInfo: cleanSymbolInfo,
+    } = symbolInfoEnvironmentSelector(symbolInfo)
+
+    const bars = await fetchKlines(cleanSymbolInfo, resolution, from, to, environment)
 
     // while (true) {
     //   console.log('fetch loop')
