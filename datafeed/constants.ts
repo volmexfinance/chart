@@ -16,3 +16,14 @@ export const getApiBaseUrlWithRestApiEnvironment = (env?: RestApiEnvironment) =>
       return apiBaseUrl
   }
 }
+
+export const getApiBaseUrlWithWsApiEnvironment = (env?: RestApiEnvironment) => {
+  switch (env) {
+    case "green":
+      return 'wss://ws-green.volmex.finance'
+    case "blue":
+      return 'wss://ws-blue.volmex.finance'
+    default:
+      return apiBaseUrl
+  }
+}
