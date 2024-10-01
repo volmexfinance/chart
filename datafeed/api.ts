@@ -71,8 +71,10 @@ async function getVolmexKlines(
     console.log({ symbolInfoBTC: symbolInfo })
     if (symbolInfo.name[0] === 'E') {
       return 'ETH'
-    } else if (symbolInfo.name[0] === 'B' && !symbolInfo.name.includes('BNB')) {
+    } else if (symbolInfo.name[0] === 'B' && !['BNB'].includes(symbolInfo.name[0])) {
       return 'BTC'
+    } else if (symbolInfo.name[0] === 'S' && !['SHIB'].includes(symbolInfo.name[0])) {
+      return 'SOL'
     } else {
       const trySymbolVIV = symbolInfo.name.split('VIV').length > 1 && symbolInfo.name.split('VIV')[0]
       const trySymbolVCORR = symbolInfo.name.split('VCORR').length > 1 && symbolInfo.name.split('VCORR')[0]
@@ -121,15 +123,15 @@ async function getVolmexKlines(
         url.searchParams.append('type', 'rv_01')
       } else if (symbolInfo.name.includes('VRV3D')) {
         url.searchParams.append('type', 'rv_03')
-      } else if (symbolInfo.name.includes('VRV1W')) {
+      } else if (symbolInfo.name.includes('VRV7D')) {
         url.searchParams.append('type', 'rv_07')
-      } else if (symbolInfo.name.includes('VRV2W')) {
+      } else if (symbolInfo.name.includes('VRV14D')) {
         url.searchParams.append('type', 'rv_14')
-      } else if (symbolInfo.name.includes('VRV1M')) {
+      } else if (symbolInfo.name.includes('VRV30D')) {
         url.searchParams.append('type', 'rv_30')
-      } else if (symbolInfo.name.includes('VRV2M')) {
+      } else if (symbolInfo.name.includes('VRV60D')) {
         url.searchParams.append('type', 'rv_60')
-      } else if (symbolInfo.name.includes('VRV3M')) {
+      } else if (symbolInfo.name.includes('VRV90D')) {
         url.searchParams.append('type', 'rv_90')
       } else {
         console.error('Could not get VRV type', {

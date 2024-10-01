@@ -32,13 +32,13 @@ export function getAllSymbols() {
   const symbolList = [
     'BTC',
     'ETH',
+    'SOL',
     'BNB',
     'XRP',
     'ADA',
     'DOGE',
     'MATIC',
     'OKB',
-    'SOL',
     'SHIB',
     'DOT',
     'LTC',
@@ -79,7 +79,7 @@ export function getAllSymbols() {
 
   const getVolmexSymbolsRV = (baseSymbol: string, name: string) => {
     //rv_01,rv_03,rv_07,rv_14,rv_30,rv_60,rv_90.
-    const times = ['1D', '3D', '1W', '2W', '1M', '2M', '3M']
+    const times = ['1D', '3D', '7D', '14D', '30D', '60D', '90D']
     const timeName = ['1 Day', '3 Day', '1 Week', '2 Week', '1 Month', '2 Month', '3 Month']
 
     // times and timeName into json
@@ -222,7 +222,7 @@ dte0360: Annualized implied rate of basis at 360-day maturity. Floating number
     ]
   }
   const getVolmexSymbolsFromIndex = (index: { symbol: string; name: string }, features: Array<string>) => {
-    const baseSymbol = index.symbol === 'ETH' ? 'E' : index.symbol === 'BTC' ? 'B' : index.symbol
+    const baseSymbol = index.symbol === 'ETH' ? 'E' : index.symbol === 'BTC' ? 'B' : index.symbol === 'SOL' ? 'S' : index.symbol
     const volmexSymbolIV = getVolmexSymbolIV(baseSymbol, index.name)
     const volmexSymbolsRV = getVolmexSymbolsRV(baseSymbol, index.name)
     const volmexSymbolRP = getVolmexSymbolRP(baseSymbol, index.name)
