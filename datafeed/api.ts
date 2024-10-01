@@ -106,8 +106,7 @@ async function getVolmexKlines(
       return url.toString()
     }
     if (symbolInfo.name.includes('VIV')) {
-      const provider = urlParams.get('provider') || 'global'
-      const url = new URL(`${getApiBaseUrlWithRestApiEnvironment(env)}/public/iv/history?provider=${provider}`)
+      const url = new URL(`${getApiBaseUrlWithRestApiEnvironment(env)}/public/iv/history?`)
       if (symbolInfo.name == 'SVIV14D') {
         url.searchParams.append('term', '14') // TODO: have to add term=14 because the default is 30, and we don't have any data for SVIV 30 day implied VOL
         url.searchParams.append('symbol', 'SVIV')
