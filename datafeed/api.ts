@@ -1,4 +1,4 @@
-import { getApiBaseUrlWithRestApiEnvironment } from './constants'
+import { getApiBaseUrlWithRestApiEnvironment, VAICC_URL } from './constants'
 import { symbolInfoEnvironmentSelector } from './helpers'
 import type { Bar, Resolution, RestApiEnvironment, SymbolInfo } from './types'
 
@@ -584,6 +584,63 @@ async function getCryptoCompareKlines(
   return bars
 }
 
+async function getVolmexVAICCKlines(symbolInfo: SymbolInfo, resolution: Resolution, from: number, to: number, env?: RestApiEnvironment): Promise<Bar[]> {
+  // const { calculateBack3Days, calculateBack40Days, calculateBack1000Days, resolutionToInterval } = volmexHelpers()
+  const urlString = `${VAICC_URL}/public/vaicc/history`
+  const resolutionToInterval = {
+    '1': '1',
+    '5': '5',
+    '15': '15',
+    '60': '60',
+    '240': '60',
+    '1D': 'D',
+    // ''
+  }
+
+  if (!['VAI', 'VAIC', 'VAIH'].includes(symbolInfo.name)) {
+    console.error('Unknown symbolInfo.name', symbolInfo.name)
+    throw 'Unknown symbolInfo.name getVolmexVAICCKlines'
+  }
+
+  const url = new URL(urlString)
+  url.searchParams.append('type', symbolInfo.name)
+  url.searchParams.append('resolution', resolutionToInterval[resolution]) // 1, 5, 15, 30, 60
+  url.searchParams.append(
+    'from',
+    from.toString()
+    // String(
+    //   resolution === '1' || resolution === '5' || resolution === '15'
+    //     ? calculateBack3Days(to)
+    //     : resolution === '60'
+    //     ? calculateBack40Days(to)
+    //     : resolution === '1D'
+    //     ? calculateBack1000Days(to)
+    //     : from
+    // )
+  )
+  url.searchParams.append('to', String(to))
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'content-type': 'application/json',
+    },
+  })
+  const data = await response.json()
+
+  const bars = data.t.map((timestamp: any, i: number) => {
+    return {
+      time: timestamp * 1000,
+      low: data.l[i],
+      high: data.h[i],
+      open: data.o[i],
+      close: data.c[i],
+      volume: data.v[i],
+    }
+  })
+
+  return bars
+}
+
 type FetchKlines = (symbolInfo: SymbolInfo, resolution: Resolution, from: number, to: number, env?: RestApiEnvironment) => Promise<Bar[]>
 
 function middleware(fetchKlines: FetchKlines): FetchKlines {
@@ -649,6 +706,7 @@ const api: {
   // getTVIVKlines: middleware(getVolmexTVIVKlines),
   // getDVIVKlines: middleware(getVolmexDVIVKlines),
   getVBRKlines: middleware(getVolmexVBRKlines),
+  getVAICCKlines: middleware(getVolmexVAICCKlines),
 }
 
 export default api

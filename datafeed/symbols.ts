@@ -354,6 +354,32 @@ dte0360: Annualized implied rate of basis at 360-day maturity. Floating number
     return [...getVolmexSymbolsVBR('E', 'Ethereum'), ...getVolmexSymbolsVBR('B', 'Bitcoin')]
   }
 
+  const generateVAICCSymbols = () => {
+    return [
+      {
+        symbol: 'VAIC',
+        full_name: 'VAIC',
+        description: `Volmex AI Cloud Index`,
+        exchange: 'Volmex',
+        type: 'ai',
+      },
+      {
+        symbol: 'VAIH',
+        full_name: 'VAIH',
+        description: `Volmex AI Hardware Index`,
+        exchange: 'Volmex',
+        type: 'ai',
+      },
+      {
+        symbol: 'VAI',
+        full_name: 'VAI',
+        description: `Volmex AI Index`,
+        exchange: 'Volmex',
+        type: 'ai',
+      }
+    ]
+  }
+
 
   const generateAllSymbolsPerEnv = (env?: RestApiEnvironment) => {
     const allVolmexSymbols = volmexSymbols
@@ -365,6 +391,7 @@ dte0360: Annualized implied rate of basis at 360-day maturity. Floating number
     .concat(generateBullBearSymbols())
     // .concat(generateDVIVSymbol())
     .concat(generateSVIVSymbol())
+    .concat(generateVAICCSymbols())
 
     if (env) {
       return allVolmexSymbols.map((s) => ({...s, symbol: s.symbol + '-' + env, full_name: s.full_name + '-' + env,  }))

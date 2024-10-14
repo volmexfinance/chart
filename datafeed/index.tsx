@@ -184,6 +184,21 @@ class TradingViewDatafeed {
       const counter = lastBarsCache.get(symbolInfo.full_name + '_' + resolution)?.counter || 0
       onHistoryCallback(bars, { noData: counter > 5 && bars.length > 0 ? false : true })
       console.log(`[getBars]: returned ${bars.length} bar(s)`)
+    } else if (['VAIC', 'VAIH', 'VAI'].includes(symbolInfo.name)) {
+      try {
+        const bars = await api.getVAICCKlines(symbolInfo, resolution, from, to)
+        if (firstDataRequest) {
+          lastBarsCache.set(symbolInfo.full_name, {
+            ...bars[bars.length - 1],
+          })
+        }
+
+        onHistoryCallback(bars, { noData: bars.length === 0 ? true : false })
+        console.log(`[getBars]: returned ${bars.length} bar(s)`)
+      } catch (error) {
+        console.log('[getBars]: Get error', error)
+        onErrorCallback(error)
+      }
     } else if (exchange === 'Volmex') {
       try {
         const bars = await api.getVolmexKlines(symbolInfo, resolution, from, to)
