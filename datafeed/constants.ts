@@ -17,4 +17,15 @@ export const getApiBaseUrlWithRestApiEnvironment = (env?: RestApiEnvironment) =>
   }
 }
 
+export const getApiBaseUrlWithWsApiEnvironment = (env?: RestApiEnvironment) => {
+  switch (env) {
+    case "green":
+      return 'wss://ws-green.volmex.finance'
+    case "blue":
+      return 'wss://ws-blue.volmex.finance'
+    default:
+      return apiBaseUrl
+  }
+}
+
 export const VAICC_URL = 'https://test-api-temp.volmex.finance'
