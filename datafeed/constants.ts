@@ -27,5 +27,3 @@ export const getApiBaseUrlWithWsApiEnvironment = (env?: RestApiEnvironment) => {
       return apiBaseUrl
   }
 }
-
-export const VAICC_URL = 'https://test-api-temp.volmex.finance'

@@ -586,7 +586,7 @@ async function getCryptoCompareKlines(
 
 async function getVolmexVAICCKlines(symbolInfo: SymbolInfo, resolution: Resolution, from: number, to: number, env?: RestApiEnvironment): Promise<Bar[]> {
   // const { calculateBack3Days, calculateBack40Days, calculateBack1000Days, resolutionToInterval } = volmexHelpers()
-  const urlString = `${VAICC_URL}/public/vaicc/history`
+  const urlString = `${getApiBaseUrlWithRestApiEnvironment(env)}/public/vaicc/history`
   const resolutionToInterval = {
     '1': '1',
     '5': '5',
