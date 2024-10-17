@@ -180,19 +180,17 @@ async function getVolmexKlines(
 
   const url = new URL(urlString)
   url.searchParams.append('resolution', resolutionToInterval[resolution])
-  url.searchParams.append(
-    'from',
-    from.toString()
-    // String(
-    //   resolution === '1' || resolution === '5' || resolution === '15'
-    //     ? calculateBack3Days(to)
-    //     : resolution === '60'
-    //     ? calculateBack40Days(to)
-    //     : resolution === '1D'
-    //     ? calculateBack1000Days(to)
-    //     : from
-    // )
-  )
+  if (symbolInfo.name == 'SVIV14D') {
+    url.searchParams.append(
+      'from',
+      '1628096642'
+    )
+  } else {
+    url.searchParams.append(
+      'from',
+      from.toString()
+    )
+  }
   url.searchParams.append('to', String(to))
   const response = await fetch(url, {
     method: 'GET',
