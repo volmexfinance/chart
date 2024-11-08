@@ -297,5 +297,20 @@ dte0360: Annualized implied rate of basis at 360-day maturity. Floating number
       ...getVolmexSymbolsVBR('B', 'Bitcoin'),
     ]
   }
-  return volmexSymbols.concat(extraSymbols).concat(generateTVIVSymbol()).concat(generateMVIVSymbol()).concat(generateVBRSymbols())
+  const generateDVIVSymbol = () => {
+    return {
+      symbol: 'DVIV',
+      full_name: 'DVIV',
+      description: `Market Volmex Implied Volatility Index`,
+      exchange: 'Volmex',
+      type: 'crypto',
+    }
+  }
+
+  return volmexSymbols
+    .concat(extraSymbols)
+    .concat(generateTVIVSymbol())
+    .concat(generateMVIVSymbol())
+    .concat(generateDVIVSymbol())
+    .concat(generateVBRSymbols())
 }
