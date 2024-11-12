@@ -1,4 +1,4 @@
-import type { Resolution } from './types'
+import type { Resolution, RestApiEnvironment, SymbolInfo } from './types'
 
 // Make requests to CryptoCompare API
 export async function makeApiRequest(path: string) {
@@ -47,4 +47,25 @@ export function getNextBarTime(resolution: Resolution) {
   const now = new Date()
   const nextBarTime = new Date(now.getTime() + timeBucket * 1000)
   return nextBarTime.getTime()
+}
+
+
+
+export const symbolInfoEnvironmentSelector = (symbolInfo: SymbolInfo) => {
+  let environment: RestApiEnvironment | undefined = undefined;
+  if (symbolInfo.full_name.includes('-green')) {
+    environment = 'green'
+  } else if (symbolInfo.full_name.includes('-blue')) {
+    environment = 'blue'
+  }
+  const cleanEnvironment = (str: string) => str.replace('-green', '').replace('-blue', '')
+
+  return {
+    symbolInfo: {
+      ...symbolInfo,
+      full_name: cleanEnvironment(symbolInfo.full_name),
+      name: cleanEnvironment(symbolInfo.name),
+    } as SymbolInfo,
+    environment,
+  }
 }

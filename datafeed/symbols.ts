@@ -1,3 +1,5 @@
+import { RestApiEnvironment } from "./types"
+
 export function getAllSymbols() {
   // const indexAssets = getTokenList('index', 80001)
   const indexAssets = [
@@ -9,7 +11,7 @@ export function getAllSymbols() {
     { symbol: 'DOGE', name: 'Dogecoin', features: [] },
     { symbol: 'MATIC', name: 'Polygon', features: [] },
     { symbol: 'OKB', name: 'OKB', features: [] },
-    { symbol: 'SOL', name: 'SOL', features: [] },
+    { symbol: 'SOL', name: 'Solana', features: [] },
     { symbol: 'SHIB', name: 'Shiba Inu', features: [] },
     { symbol: 'DOT', name: 'Polkadot', features: [] },
     { symbol: 'LTC', name: 'Litecoin', features: [] },
@@ -30,13 +32,13 @@ export function getAllSymbols() {
   const symbolList = [
     'BTC',
     'ETH',
+    'SOL',
     'BNB',
     'XRP',
     'ADA',
     'DOGE',
     'MATIC',
     'OKB',
-    'SOL',
     'SHIB',
     'DOT',
     'LTC',
@@ -77,7 +79,7 @@ export function getAllSymbols() {
 
   const getVolmexSymbolsRV = (baseSymbol: string, name: string) => {
     //rv_01,rv_03,rv_07,rv_14,rv_30,rv_60,rv_90.
-    const times = ['1D', '3D', '1W', '2W', '1M', '2M', '3M']
+    const times = ['1D', '3D', '7D', '14D', '30D', '60D', '90D']
     const timeName = ['1 Day', '3 Day', '1 Week', '2 Week', '1 Month', '2 Month', '3 Month']
 
     // times and timeName into json
@@ -220,11 +222,15 @@ dte0360: Annualized implied rate of basis at 360-day maturity. Floating number
     ]
   }
   const getVolmexSymbolsFromIndex = (index: { symbol: string; name: string }, features: Array<string>) => {
-    const baseSymbol = index.symbol === 'ETH' ? 'E' : index.symbol === 'BTC' ? 'B' : index.symbol
+    const baseSymbol = index.symbol === 'ETH' ? 'E' : index.symbol === 'BTC' ? 'B' : index.symbol === 'SOL' ? 'S' : index.symbol
     const volmexSymbolIV = getVolmexSymbolIV(baseSymbol, index.name)
     const volmexSymbolsRV = getVolmexSymbolsRV(baseSymbol, index.name)
     const volmexSymbolRP = getVolmexSymbolRP(baseSymbol, index.name)
-    const volmexSymbolsVCORR = getVolmexSymbolsVCORR(baseSymbol, index.name)
+    // const volmexSymbolRP = getVolmexSymbolRP(baseSymbol, index.name)
+    let volmexSymbolsVCORR = []
+    if (index.symbol === 'ETH' || index.symbol === 'BTC') {
+      volmexSymbolsVCORR = getVolmexSymbolsVCORR(baseSymbol, index.name)
+    }
 
     const volmexSymbolsPerps: any[] = [] /*indexAssets.map((index) => ({
         symbol: index.symbol,
@@ -258,7 +264,7 @@ dte0360: Annualized implied rate of basis at 360-day maturity. Floating number
   const generateIndexPriceSymbols = () => {
     // Only show ETH and BTC index price
     return indexAssets
-      .filter((i) => i.symbol == 'ETH' || i.symbol == 'BTC')
+      .filter((i) => i.symbol == 'ETH' || i.symbol == 'BTC'  || i.symbol == 'SOL')
       .map((i) => {
         return {
           symbol: i.symbol + '/USD',
@@ -307,10 +313,73 @@ dte0360: Annualized implied rate of basis at 360-day maturity. Floating number
     }
   }
 
-  return volmexSymbols
+  const generateBullBearSymbols = () => {
+    return [
+      {
+        symbol: 'BVBEAR',
+        full_name: 'BVBear',
+        description: `Bitcoin Volmex Bear (30-day) Implied Semi-volatility Index`,
+        exchange: 'Volmex',
+        type: 'crypto',
+      },
+      {
+        symbol: 'BVBULL',
+        full_name: 'BVBull',
+        description: `Bitcoin Volmex Bull (30-day) Implied Semi-volatility Index`,
+        exchange: 'Volmex',
+        type: 'crypto',
+      },
+      {
+        symbol: 'EVBEAR',
+        full_name: 'EVBear',
+        description: `Ethereum Volmex Bear (30-day) Implied Semi-volatility Index`,
+        exchange: 'Volmex',
+        type: 'crypto',
+      },
+      {
+        symbol: 'EVBULL',
+        full_name: 'EVBull',
+        description: `Ethereum Volmex Bull (30-day) Implied Semi-volatility Index`,
+        exchange: 'Volmex',
+        type: 'crypto',
+      }
+    ]
+  }
+  
+  const generateSVIVSymbol = () => {
+    return {
+      symbol: 'SVIV14D',
+      full_name: 'SVIV14D',
+      description: `Solana Volmex Implied Volatility Index (14-day)`,
+      exchange: 'Volmex',
+      type: 'crypto',
+    }
+  }
+
+
+  const generateAllSymbolsPerEnv = (env?: RestApiEnvironment) => {
+    const allVolmexSymbols = volmexSymbols
     .concat(extraSymbols)
-    .concat(generateTVIVSymbol())
+    // .concat(generateTVIVSymbol())
     .concat(generateMVIVSymbol())
-    .concat(generateDVIVSymbol())
     .concat(generateVBRSymbols())
+  // .concat(generateDVIVSymbol())
+    .concat(generateBullBearSymbols())
+    // .concat(generateDVIVSymbol())
+    .concat(generateSVIVSymbol())
+
+    if (env) {
+      return allVolmexSymbols.map((s) => ({...s, symbol: s.symbol + '-' + env, full_name: s.full_name + '-' + env,  }))
+    } else {
+      return allVolmexSymbols
+    }
+  }
+
+  // disable blue and green in volmex.finance domain
+  if (window.location.hostname.includes('volmex.finance')) {
+    return generateAllSymbolsPerEnv()
+  }
+  return generateAllSymbolsPerEnv()
+    .concat(generateAllSymbolsPerEnv('blue'))
+    .concat(generateAllSymbolsPerEnv('green'))
 }
