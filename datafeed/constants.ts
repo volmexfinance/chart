@@ -7,6 +7,7 @@ const apiBaseUrl =
 
 
 export const getApiBaseUrlWithRestApiEnvironment = (env?: RestApiEnvironment) => {
+  return 'https://rest-v1.volmex.finance' // override for automation
   switch (env) {
     case "green":
       return 'https://rest-v1-green.volmex.finance'
