@@ -93,6 +93,11 @@ async function getVolmexKlines(
   const urlParams = new URLSearchParams(window.location.search)
 
   const getUrlString = (symbolInfo: SymbolInfo) => {
+    if (symbolInfo.name == 'VBR') {
+      const url = new URL(`${getApiBaseUrlWithRestApiEnvironment(env)}/public/vbr/history`)
+      url.searchParams.append('type', symbolInfo.name)
+      return url.toString()
+    }
     if (symbolInfo.name.includes('VBEAR') || symbolInfo.name.includes('VBULL')) {
       const url = new URL(`${getApiBaseUrlWithRestApiEnvironment()}/public/semiiv/history`)
       
