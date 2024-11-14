@@ -93,7 +93,7 @@ async function getVolmexKlines(
   const urlParams = new URLSearchParams(window.location.search)
 
   const getUrlString = (symbolInfo: SymbolInfo) => {
-    if (symbolInfo.name == 'VBR') {
+    if (['VBR', 'CCSA', 'DLR'].includes(symbolInfo.name)) {
       const url = new URL(`${getApiBaseUrlWithRestApiEnvironment(env)}/public/vbr/history`)
       url.searchParams.append('type', symbolInfo.name)
       return url.toString()

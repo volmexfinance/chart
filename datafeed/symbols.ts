@@ -361,6 +361,18 @@ dte0360: Annualized implied rate of basis at 360-day maturity. Floating number
       description: `Volmex Base Rate`,
       exchange: 'Volmex',
       type: 'crypto',
+    },{
+      symbol: 'CCSA',
+      full_name: 'CCSA',
+      description: `Volmex Cash and Carry Strategy`,
+      exchange: 'Volmex',
+      type: 'crypto',
+    },{
+      symbol: 'DLR',
+      full_name: 'DLR',
+      description: `Volmex Defi Lending Rate`,
+      exchange: 'Volmex',
+      type: 'crypto',
     }]
   }
 
